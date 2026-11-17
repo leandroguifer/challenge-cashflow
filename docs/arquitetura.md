@@ -20,14 +20,16 @@ A solução é dividida em dois serviços independentes. O *serviço de lançame
    * Realizar orçamentos e vendas de produtos
    * Emissão de nota fiscal
 
-### 1.2 Atores
+# 2 Contexto
+
+### 2.1 Atores
 | Ator | Função |
 | --- | --- |
 | **Proprietário** | vê e confere o caixas de todas as lojas todos os dias através do relatório consolidado |
 | **Auxiliar Administrativo** | vê e confere o caixa da loja que trabalha através do relatório consolidado |
 | **Caixa** | opera o caixa da loja que trabalha, registrar as entradas e saídas e fechar o caixa no final do dia |
 
-## 2 Domínios
+## 2.2 Domínios
 
 | Domínio | Ações |
 | --- | --- |
@@ -36,7 +38,7 @@ A solução é dividida em dois serviços independentes. O *serviço de lançame
 | Transversal | Controlar o acesso por papel por loja |
 
 
-## 3 Considerações
+## 2.3 Considerações
 * O saldo diário é por loja, sendo que o proprietário vê de cada loja e o total das 3
 * Os dados pertencem a empresa, cada loja é a divisão dela e o acesso é controlado por loja. O auxiliar administrativo e o caixa veêm somente a própria loja
 * Cada loja tem um caixa
