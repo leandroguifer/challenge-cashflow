@@ -6,8 +6,8 @@ Este documento é o guia de referência da arquitetua do sistema de **Fluxo de C
 O **Sistema de Fluxo de Caixa** está sendo elaborado para atender a **Fernandes Mecânica** com o intuido te subistituir o processo que hoje é feito em planilhas e de mandeira descentralizada, para um modelo em SaaS que vai proporcinar a unificação das informações das lojas.
 ### 1.1 Contexto
 * O que o sistema faz
-   * Lançamento de entradas (créditos) e saídas (débitos) por empresa
-   * Emite um relatório do saldo diário e lançamentos consolidado por empresa 
+   * Lançamento de entradas (créditos) e saídas (débitos) por loja
+   * Emite um relatório do saldo diário e lançamentos consolidado por loja
 * O que o sistema **não faz**
    * Controle de estoque
    * Controle de ordens de serviço
