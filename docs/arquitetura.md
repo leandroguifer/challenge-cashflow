@@ -31,6 +31,6 @@ O **Sistema de Fluxo de Caixa** está sendo elaborado para atender a **Fernandes
    * Emissão de nota fiscal
 
 ### 1.2 Atores
-* **Proprietário**
-* **Auxiliar Administrativo**
-* **Caixa**
+* **Proprietário**: vê e confere o caixas de todas as lojas todos os dias
+* **Auxiliar Administrativo**: vê e confere o caixa da loja que trabalha
+* **Caixa**: opera o caixa da loja que trabalha
