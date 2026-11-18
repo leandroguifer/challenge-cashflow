@@ -5,7 +5,7 @@
 * **Autores:** Leandro Fernandes
 
 ## Contexto
-O serviço de *Consolidado* tem que receber cada lançamento do serviço de lançamento* e nenhum pode ser perdido. Podem haver eventos repetidos e esses não podem alterar o saldo duas vezes, conforme RNF005. 
+O serviço de *Consolidado* tem que receber cada lançamento do serviço de *Lançamento* e nenhum pode ser perdido. Podem haver eventos repetidos e esses não podem alterar o saldo duas vezes, conforme  RNF05. 
 
 ## Decisão
 O serviço de  *Lançamentos*  grava o lançamento e o evento correspondente no mesmo banco, na mesma transação (outbox). Um processo em segundo plano publica os eventos pendentes no RabbitMQ. O serviço de *Consolidado* consome os eventos e registra os já processados, para ignorar repetições. Mensagens que falham de forma repetida vão para uma fila de erros.

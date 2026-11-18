@@ -5,13 +5,13 @@
 * **Autores:** Leandro Fernandes
 
 ## Contexto
-O acesso para consulta pelo proprietário e auxiliar administrativo é diário, podendo gerar um pico de 50 requisições por segundo, apontado no RNF002. A cada consulta do saldo, terá que ser feito a soma de todos os lançamentos do dia.
+O acesso para consulta pelo proprietário e auxiliar administrativo é diário, podendo gerar um pico de 50 requisições por segundo, apontado no  RNF02. A cada consulta do saldo, terá que ser feito a soma de todos os lançamentos do dia.
 
 ## Decisão
-A decisão a cada lançamento escrito na tabela de lançamentos, disparar um evento que calcula o saldo e grava em um banco e tabela próprios.
+Cada lançamento escrito na tabela de lançamentos, disparar um evento e *Consolidado* calcula o saldo e grava em um banco e tabela próprios.
 
 ## Alternativas consideradas
-* **Opção A:** **tabela única.** Uma única tabela simplificaria bastante e eliminaria a necessidade de manter as informações sincronizadas em dois lugares, mas custaria o RNF001 enem o RNF002.
+* **Opção A:** **tabela única.** Uma única tabela simplificaria bastante e eliminaria a necessidade de manter as informações sincronizadas em dois lugares, mas comprometeria o  RNF01 enem o  RNF02.
 * **Opção B:** **cálculo agendado**. Em determinados intevalos de tempo o saldo seria calculado, mas sempre defasado, até a próxima atualização, além de também ficar recalculando necessidade.
 
 ## Consequências
