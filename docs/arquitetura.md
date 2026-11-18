@@ -1,5 +1,8 @@
 # Arquitetura do Sistema
 
+* **Data:** 17/11/2026
+* **Autores:** Leandro Fernandes
+
 Este documento é o guia de referência da arquitetura do sistema de **Fluxo de Caixa**, tomando como exemplo o caso da **Fernandes Mecânica**. Nele detalhamos o contexto de negócio e os demais pontos que envolvem o projeto.
 
 ## Índice
@@ -30,7 +33,7 @@ O comerciante precisa controlar seu fluxo de caixa diário, com lançamentos de 
 
 O **Sistema de Fluxo de Caixa** está sendo pensado para atender a **Fernandes Mecânica**, com o intuito de substituir o processo que hoje é feito em planilhas, de maneira descentralizada, por um modelo SaaS multi-tenant que fará a unificação das informações das lojas.
 
-A solução é dividida em dois serviços independentes. O *serviço de lançamentos* registra cada débito e crédito e responde ao caixa na hora. A cada lançamento, ele avisa o outro serviço por meio de um evento. O *serviço de consolidado* recebe esses eventos e mantém o saldo diário de cada loja já calculado, pronto para consulta. Se o consolidado ficar fora do ar, os lançamentos continuam sendo aceitos e os eventos esperam na fila, e o saldo é atualizado quando o serviço voltar.
+A solução é dividida em dois serviços independentes. O serviço de lançamentos* registra cada débito e crédito e responde ao caixa na hora. A cada lançamento, ele avisa o outro serviço por meio de um evento. O serviço de *Consolidado* recebe esses eventos e mantém o saldo diário de cada loja já calculado, pronto para consulta. Se o consolidado ficar fora do ar, os lançamentos continuam sendo aceitos e os eventos esperam na fila, e o saldo é atualizado quando o serviço voltar.
 
 <a id="1_1"></a>
 ### 1.1 Escopo
@@ -108,12 +111,97 @@ A solução é dividida em dois serviços independentes. O *serviço de lançame
 <a id="4"></a>
 ## 4. Arquitetura alvo
 
-...
+A arquitetura é descrita no modelo C4, em dois níveis: o contexto (quem usa o sistema e com o que ele conversa) e os contêineres (as peças que rodam). Nos diagramas, o azul é o que construímos e o cinza é o que é externo.
+
+<a id="4_1"></a>
+### 4.1 Contexto
+
+```mermaid
+C4Context
+title Nível 1 - Contexto: sistema de fluxo de caixa
+Person(proprietario, "Proprietário", "Vê todas as lojas e confere o caixa todos os dias")
+Person(caixa, "Caixa", "Abre o caixa, registra entradas e saídas e fecha o caixa da loja")
+Person(auxiliar, "Auxiliar administrativo", "Consulta o saldo e o relatório da própria loja")
+System(fluxo, "Sistema de fluxo de caixa", "Controla lançamentos e consolida o saldo diário por loja")
+System_Ext(keycloak, "Keycloak", "Autenticação e papéis (OIDC)")
+Rel(proprietario, fluxo, "Valida e consulta")
+Rel(caixa, fluxo, "Lança e fecha")
+Rel(auxiliar, fluxo, "Consulta")
+Rel(fluxo, keycloak, "Autentica", "OIDC")
+UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+```
+
+Os três atores usam o sistema conforme o seu papel (seção 2.1). A autenticação e os papéis ficam fora dele, em um provedor de identidade (Keycloak), o que mantém o sistema focado no negócio.
+
+<a id="4_2"></a>
+### 4.2 Contêineres
+
+```mermaid
+C4Container
+title Nível 2 - Contêineres: sistema de fluxo de caixa
+System_Ext(keycloak, "Keycloak", "Autenticação e papéis (OIDC)")
+Person(usuario, "Usuário", "Proprietário, Caixa ou Auxiliar administrativo")
+System_Boundary(sistema, "Sistema de fluxo de caixa") {
+  Container(apiLanc, "API de Lançamentos", "C#, EF Core", "Registra débitos e créditos, abre e fecha o caixa")
+  Container(spa, "Front-end", "Angular, Taiga UI", "Tela de lançar e ver o saldo")
+  Container(apiCons, "API de Consolidado", "C#, Dapper", "Consome eventos e responde o saldo diário")
+  ContainerDb(dbLanc, "Banco de Lançamentos", "PostgreSQL", "Lançamentos e outbox")
+  ContainerQueue(fila, "Fila de eventos", "RabbitMQ", "Transporta os eventos de lançamento")
+  ContainerDb(dbCons, "Banco de Consolidado", "PostgreSQL", "Saldo diário e eventos já processados")
+}
+Rel(usuario, spa, "Usa")
+Rel(spa, keycloak, "Login", "OIDC")
+Rel(spa, apiLanc, "Lança", "HTTPS")
+Rel(spa, apiCons, "Consulta", "HTTPS")
+Rel(apiLanc, dbLanc, "Grava", "SQL")
+Rel(apiLanc, fila, "Publica", "AMQP")
+Rel(fila, apiCons, "Entrega", "AMQP")
+Rel(apiCons, dbCons, "Atualiza e lê", "SQL")
+UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
+```
+
+| Contêiner | Responsabilidade |
+| --- | --- |
+| Front-end | Tela de lançar e de ver o saldo. Obtém o token no Keycloak e chama as duas APIs. |
+| API de Lançamentos | Abre e fecha o caixa e registra entradas e saídas. Grava o lançamento e o evento no mesmo banco, na mesma transação (outbox). |
+| Banco de Lançamentos | Guarda os lançamentos e os eventos ainda não publicados. |
+| Fila de eventos | Transporta os eventos de lançamento. Quem publica não espera quem consome. |
+| API de Consolidado | Consome os eventos, ignora os repetidos, atualiza o saldo diário e responde às consultas e ao relatório. |
+| Banco de Consolidado | Guarda o saldo diário por loja e os eventos já processados. |
+
+Cada serviço tem o seu próprio banco, e os dois só se comunicam por eventos. Os dados são da empresa, e o acesso é limitado por papel e por loja (detalhes na seção 6).
+
+<a id="4_3"></a>
+### 4.3 Fluxo de um lançamento
+
+1. O caixa registra uma entrada ou saída no front-end, que chama a API de Lançamentos.
+2. A API grava o lançamento e o evento correspondente no Banco de Lançamentos, em uma única transação, e responde ao caixa.
+3. Em segundo plano, o evento é publicado na fila.
+4. A API de Consolidado recebe o evento e verifica se ele já foi processado. Se não foi, atualiza o saldo do dia da loja e registra o evento como processado.
+5. O proprietário e o auxiliar consultam o saldo já calculado, sem somar lançamentos na hora.
+
+<a id="4_4"></a>
+### 4.4 Como a arquitetura atende os requisitos
+
+| Requisito | Como é atendido |
+| --- | --- |
+| RNF01 Isolamento de falha | O Lançamentos só grava no próprio banco. Se o Consolidado parar, os eventos esperam na fila. |
+| RNF02 Desempenho do consolidado | O saldo já está calculado, e a leitura não soma lançamentos. A API de Consolidado pode rodar em várias instâncias. |
+| RNF03 Atraso do saldo | A atualização é assíncrona e contínua. Depois de uma parada, o consumidor esvazia a fila acumulada. |
+| RNF04 Disponibilidade | Serviços independentes: a queda de um não derruba o outro. |
+| RNF05 Durabilidade e sem duplicidade | O outbox garante que o evento nasce junto com o lançamento. O registro dos eventos já processados impede contar duas vezes. |
+
 
 <a id="5"></a>
 ## 5. Decisões
 
-...
+Para a escolha da arquitetura foram tomadas algumas decisões que estão registradas nos ADRs a seguir. Cada uma baseada nos [requisitos não funcionais](#3_2) da solução e registra o contexto, a escolha, a alternativa descartada e as consequências.
+
+| ADR | Decisão |
+| --- | --- |
+| [001](adr/001-dois-servicos.md) | Separar Lançamentos e Consolidado em dois serviços |
+| [002](adr/002-saldo-em-tabela-propria.md) | Saldo diário em tabela própria, atualizada por eventos |
+| [003](adr/003-rabbitmq-outbox.md) | RabbitMQ com outbox e consumidor sem duplicidade |
 
 <a id="6"></a>
 ## 6. Segurança e LGPD
