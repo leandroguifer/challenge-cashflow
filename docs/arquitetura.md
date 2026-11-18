@@ -22,13 +22,12 @@ Este documento é o guia de referência da arquitetura do sistema de **Fluxo de 
    - 4.3 [Fluxo de um lançamento](#4_3)
    - 4.4 [Como a arquitetura atende os requisitos](#4_4)
 5. [Decisões](#5)
-6. [Segurança e LGPD](#6)
+6. [Segurança](#6)
 7. [Qualidade e observabilidade](#7)
 8. [Riscos e impactos](#8)
 9. [Custos](#9)
 10. [Transição](#10)
-11. [Resumo das decisões](#11)
-12. [Evoluções futuras](#12)
+11. [Evoluções futuras](#11)
 
 <a id="1"></a>
 ## 1. Visão geral
@@ -68,7 +67,7 @@ A solução é dividida em dois serviços independentes. O serviço de *Lançame
 
 | Domínio | Ações |
 | --- | --- |
-| *Lançamentos* | Abrir caixa, Registrar entrada, Registrar saída, Fechar caixa e Validar fechamento |
+| *Lançamentos* | Abrir caixa, Registrar entrada, Registrar saída, Fechar caixa |
 | *Consolidado* | Consolidar o saldo diário por loja, Consultar o saldo de uma loja, Consultar o saldo da empresa e Disponibilizar o relatório |
 | Transversal | Controlar o acesso por papel e por loja |
 
@@ -92,14 +91,13 @@ A solução é dividida em dois serviços independentes. O serviço de *Lançame
 | RF02 | *Lançamentos* | Registrar uma *entrada* com valor, data e descrição, somente com o caixa aberto. *Lançamentos* são imutáveis. |
 | RF03 | *Lançamentos* | Registrar uma *saída* com valor, data e descrição, somente com o caixa aberto. *Lançamentos* são imutáveis. |
 | RF04 | *Lançamentos* | Fechar o caixa. O dia da loja é encerrado e não aceita mais lançamentos. |
-| RF05 | *Lançamentos* | Validar o fechamento do caixa da loja. |
-| RF06 | *Consolidado* | Atualizar o saldo diário da loja a cada lançamento registrado. Saldo do dia = créditos − débitos daquele dia, por loja. |
-| RF07 | *Consolidado* | Consultar o saldo diário de uma loja. |
-| RF08 | *Consolidado* | Consultar o saldo diário da empresa, somando as lojas. Saldo da empresa = soma dos saldos do dia de cada loja. |
-| RF09 | *Consolidado* | Disponibilizar o relatório do dia, com lançamentos e saldo, por loja e para a empresa. |
-| RF10 | Transversal | Autenticar o usuário e identificar seu papel e sua loja. |
-| RF11 | Transversal | Restringir o acesso por loja: caixa e auxiliar veem só a própria, o proprietário vê todas. |
-| RF12 | Transversal | Restringir as ações por papel: só o caixa lança, abre e fecha; só o proprietário valida; o auxiliar só consulta. |
+| RF05 | *Consolidado* | Atualizar o saldo diário da loja a cada lançamento registrado. Saldo do dia = créditos − débitos daquele dia, por loja. |
+| RF06 | *Consolidado* | Consultar o saldo diário de uma loja. |
+| RF07 | *Consolidado* | Consultar o saldo diário da empresa, somando as lojas. Saldo da empresa = soma dos saldos do dia de cada loja. |
+| RF08 | *Consolidado* | Disponibilizar o relatório do dia, com lançamentos e saldo, por loja e para a empresa. |
+| RF09 | Transversal | Autenticar o usuário e identificar seu papel e sua loja. |
+| RF10 | Transversal | Restringir o acesso por loja: caixa e auxiliar veem só a própria, o proprietário vê todas. |
+| RF11 | Transversal | Restringir as ações por papel: só o caixa lança, abre e fecha; só o proprietário valida; o auxiliar só consulta. |
 
 <a id="3_2"></a>
 ### 3.2 Requisitos não funcionais
@@ -128,7 +126,7 @@ Person(caixa, "Caixa", "Abre o caixa, registra entradas e saídas e fecha o caix
 Person(auxiliar, "Auxiliar administrativo", "Consulta o saldo e o relatório da própria loja")
 System(fluxo, "Sistema de fluxo de caixa", "Controla lançamentos e consolida o saldo diário por loja")
 System_Ext(keycloak, "Keycloak", "Autenticação e papéis (OIDC)")
-Rel(proprietario, fluxo, "Valida e consulta")
+Rel(proprietario, fluxo, "Consulta")
 Rel(caixa, fluxo, "Lança e fecha")
 Rel(auxiliar, fluxo, "Consulta")
 Rel(fluxo, keycloak, "Autentica", "OIDC")
@@ -206,38 +204,70 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 | [001](adr/001-dois-servicos.md) | Separar *Lançamentos* e *Consolidado* em dois serviços |
 | [002](adr/002-saldo-em-tabela-propria.md) | Saldo diário em tabela própria, atualizada por eventos |
 | [003](adr/003-rabbitmq-outbox.md) | RabbitMQ com outbox e consumidor sem duplicidade |
+| [004](adr/004-cqrs-leve.md) | CQRS leve, com EF Core na escrita e Dapper na leitura |
+| [005](adr/005-acesso-por-empresa-e-loja.md) | Acesso por empresa e loja com Keycloak e RLS no PostgreSQL |
 
 <a id="6"></a>
-## 6. Segurança e LGPD
+## 6. Segurança
 
-...
+* **Autenticação e autorização:** toda chamada exige token do Keycloak (OIDC). A API confere assinatura, validade e audiência. O papel define a ação (RF11) e o grupo define a loja (RF10).
+* **Isolamento dos dados:** RLS por loja no banco. Sem a loja informada, nenhuma linha é devolvida (ADR 005).
+* **Transporte e segredos:** HTTPS nas APIs. Segredos fora do repositório, com apenas um `.env.example` de valores fictícios.
+* **Mensageria:** cada serviço tem seu usuário no RabbitMQ, com permissão mínima: o *Lançamentos* só publica e o *Consolidado* só consome.
+
 
 <a id="7"></a>
 ## 7. Qualidade e observabilidade
 
-...
+* **Testes:** unitários (regra do saldo diário e evento repetido), de integração com PostgreSQL e RabbitMQ em contêineres, de arquitetura (xUnit), de isolamento do RLS, de resiliência (derrubar o *Consolidado*, RNF01) e de carga (50 req/s por 5 minutos, RNF02).
+* **Execução:** os testes unitários, de arquitetura, de isolamento e de integração rodam a cada pull request em GitHub Actions. Os testes de resiliência e de carga rodam sob demanda.
+* **Observabilidade:** as APIs são instrumentadas com OpenTelemetry (métricas, traces e logs). Na demonstração, os dados vão para o Aspire Dashboard, que sobe junto no `docker compose`. Em produção, a proposta é Prometheus e Grafana, com alerta quando a fila acumula por mais de 1 minuto. Um trace acompanha o lançamento até o saldo atualizado.
+
 
 <a id="8"></a>
 ## 8. Riscos e impactos
 
-...
+| Risco | Mitigação |
+| --- | --- |
+| RabbitMQ fora do ar | O outbox guarda os eventos e reenvia quando ele volta |
+| Evento repetido | O *Consolidado* registra os eventos já processados (RNF05) |
+| Mensagem com erro repetida | Fila de erros e alerta |
+| Pico acima de 50 req/s | Saldo já calculado e várias instâncias |
+| Keycloak fora do ar | Tokens de curta duração. Sessões ativas continuam |
+| Lançamento errado, sem edição | Fora do escopo. Evolução: lançamento de ajuste |
 
 <a id="9"></a>
 ## 9. Custos
 
-...
+- **Premissas:** 3 lojas, cerca de 1.000 lançamentos por dia (a validar no teste de carga, RNF02).
+- **Licenças:** sem custo (tudo open source).
+- **Infraestrutura:** VPS Hostinger, plano de 24 meses.
+
+| Cenário | Servidores | 24 meses | Após renovação |
+| --- | --- | --- | --- |
+| Produção inicial | 1 × KVM 4 (aplicações) <br/> 1 × KVM 2 (bancos e RabbitMQ) | R$ 102,98 | R$ 227,98 |
+| Alta disponibilidade | 2 × KVM 4 <br/> 3 × KVM 2 <br/> 1 × KVM 1 (balanceador Nginx) | R$ 278,94 | R$ 593,94 |
+
+Fonte: [https://www.hostinger.com/br/precos/vps-hosting#plan-selector](https://www.hostinger.com/br/precos/vps-hosting#plan-selector), consultada em 18/11/2026.
 
 <a id="10"></a>
 ## 10. Transição
 
-...
+Hoje o caixa é controlado em planilhas. A migração é gradual:
+
+1. **Preparação:** cadastro das lojas e dos usuários, e treinamento.
+2. **Convivência:** uma loja piloto (Rio Verde) usa o sistema e a planilha em paralelo, e o proprietário compara os saldos todo dia. Como a planilha continua completa, voltar a ela não perde nada.
+3. **Corte por loja:** com os saldos batendo, a loja passa a usar só o sistema, e depois seguem as outras duas.
+4. **Encerramento:** as planilhas são arquivadas.
+
+É a lógica de migrações incrementais que já conduzi em outros sistemas: conviver com o antigo, comparar e só então desligar.
 
 <a id="11"></a>
-## 11. Resumo das decisões
+## 11. Evoluções futuras
 
-...
-
-<a id="12"></a>
-## 12. Evoluções futuras
-
-...
+* Lançamento de ajuste para corrigir erros, e reabertura do caixa
+* Saldo acumulado entre os dias
+* CQRS completo com Event Sourcing
+* Cache nas consultas do *Consolidado*
+* Atualização em tempo real da tela de saldo
+* Bancos em servidores separados e alta disponibilidade
