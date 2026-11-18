@@ -1,4 +1,4 @@
-# ADR 001: Separar Lançamentos e *Consolidado* em dois serviços
+# ADR 001: Separar  *Lançamentos*  e *Consolidado* em dois serviços
 
 * **Data:** 18/11/2026
 * **Status:** Aceito
