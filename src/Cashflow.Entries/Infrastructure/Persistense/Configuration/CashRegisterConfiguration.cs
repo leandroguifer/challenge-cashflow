@@ -2,7 +2,7 @@ using Cashflow.Entries.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Cashflow.Entries.Persistence.Configuration;
+namespace Cashflow.Entries.Infrastructure.Persistence.Configuration;
 
 internal sealed class CashRegisterConfiguration : IEntityTypeConfiguration<CashRegister>
 {

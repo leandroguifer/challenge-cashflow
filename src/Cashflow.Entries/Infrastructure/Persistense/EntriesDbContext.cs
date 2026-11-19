@@ -1,9 +1,9 @@
 using Cashflow.Core.Data;
 using Cashflow.Entries.Domain;
-using Cashflow.Entries.Persistence.Configuration;
+using Cashflow.Entries.Infrastructure.Persistence.Configuration;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cashflow.Entries.Persistence;
+namespace Cashflow.Entries.Infrastructure.Persistence;
 
 internal sealed class EntriesDbContext : CashflowDbContext
 {

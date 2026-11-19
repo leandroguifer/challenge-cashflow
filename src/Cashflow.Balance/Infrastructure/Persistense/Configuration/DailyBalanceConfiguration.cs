@@ -2,7 +2,7 @@ using Cashflow.Balance.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Cashflow.Balance.Persistence.Configuration;
+namespace Cashflow.Balance.Infrastructure.Persistence.Configuration;
 
 internal sealed class DailyBalanceConfiguration : IEntityTypeConfiguration<DailyBalance>
 {

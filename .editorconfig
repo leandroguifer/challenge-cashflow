@@ -1,0 +1,4 @@
+[**/Migrations/*.cs]
+generated_code = true
+
+dotnet_diagnostic.CA1812.severity = none

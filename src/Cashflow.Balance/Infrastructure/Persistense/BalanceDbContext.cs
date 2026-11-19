@@ -1,9 +1,9 @@
 using Cashflow.Core.Data;
 using Cashflow.Balance.Domain;
-using Cashflow.Balance.Persistence.Configuration;
+using Cashflow.Balance.Infrastructure.Persistence.Configuration;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cashflow.Balance.Persistence;
+namespace Cashflow.Balance.Infrastructure.Persistence;
 
 internal sealed class BalanceDbContext : CashflowDbContext
 {
