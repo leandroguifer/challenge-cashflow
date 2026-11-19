@@ -6,6 +6,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
       APP_PASSWORD: ${APP_PASSWORD}
     ports:
       - "${POSTGRES_PORT}:5432"
@@ -60,7 +61,8 @@ services:
       context: .
       dockerfile: src/Cashflow.Entries/Dockerfile
     environment:
-      ConnectionStrings__Default: Host=postgres;Database=entries;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Default: ${ENTRIES_DB_DEFAULT}
+      ConnectionStrings__Migrations: ${ENTRIES_DB_MIGRATIONS}
       RabbitMq__Host: rabbitmq
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
@@ -80,7 +82,8 @@ services:
       context: .
       dockerfile: src/Cashflow.Balance/Dockerfile
     environment:
-      ConnectionStrings__Default: Host=postgres;Database=balance;Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__Default: ${BALANCE_DB_DEFAULT}
+      ConnectionStrings__Migrations: ${BALANCE_DB_MIGRATIONS}
       RabbitMq__Host: rabbitmq
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}
