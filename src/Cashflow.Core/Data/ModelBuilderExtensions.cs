@@ -3,11 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cashflow.Core.Data;
 
-/// <summary>Naming conventions for the PostgreSQL model.</summary>
 public static class ModelBuilderExtensions
 {
-    /// <summary>Renames tables and columns to snake_case.</summary>
-    /// <param name="modelBuilder">The model builder.</param>
     public static void ApplySnakeCaseNames(this ModelBuilder modelBuilder)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
