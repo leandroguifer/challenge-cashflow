@@ -1,0 +1,73 @@
+<header class="head">
+  <div>
+    <h1>Caixa do dia</h1>
+    <p>{{ store().name }} · {{ today }}</p>
+  </div>
+  <span [tuiStatus]="statusColor[day().status]">{{ statusLabel[day().status] }}</span>
+</header>
+
+@if (day().status === 'nao-aberto') {
+  <tui-block-status>
+    <h2>O caixa de hoje ainda não foi aberto</h2>
+    <p>Abra o caixa para começar a registrar entradas e saídas.</p>
+    <button tuiButton size="m" (click)="open()">Abrir caixa</button>
+  </tui-block-status>
+} @else {
+  <div class="cards">
+    <section tuiCardLarge>
+      <small>Saldo do dia</small>
+      <strong>{{ summary().balance | tuiAmount: 'BRL' }}</strong>
+    </section>
+    <section tuiCardLarge>
+      <small>Entradas</small>
+      <strong>{{ summary().credits | tuiAmount: 'BRL' }}</strong>
+    </section>
+    <section tuiCardLarge>
+      <small>Saídas</small>
+      <strong>{{ summary().debits | tuiAmount: 'BRL' }}</strong>
+    </section>
+  </div>
+
+  <div class="actions">
+    <button tuiButton size="m" iconStart="@tui.plus" [disabled]="day().status === 'fechado'" (click)="startEntry('entrada')">
+      Entrada
+    </button>
+    <button
+      tuiButton
+      size="m"
+      appearance="secondary"
+      iconStart="@tui.minus"
+      [disabled]="day().status === 'fechado'"
+      (click)="startEntry('saida')"
+    >
+      Saída
+    </button>
+    <span class="spacer"></span>
+    @if (day().status === 'fechado') {
+      <small>Dia encerrado. Não aceita mais lançamentos.</small>
+    } @else {
+      <button tuiButton size="m" appearance="action-destructive" (click)="close()">Fechar caixa</button>
+    }
+  </div>
+
+  <app-entries-table [rows]="rows()" />
+}
+
+<ng-template [(tuiDialog)]="dialogOpen">
+  <form class="dialog" (ngSubmit)="register()">
+    <h2>{{ dialogType() === 'entrada' ? 'Registrar entrada' : 'Registrar saída' }}</h2>
+    <tui-textfield>
+      <label tuiLabel for="amount">Valor</label>
+      <input id="amount" name="amount" tuiInputNumber prefix="R$ " [min]="0" [(ngModel)]="amount" />
+    </tui-textfield>
+    <tui-textfield>
+      <label tuiLabel for="description">Descrição</label>
+      <textarea id="description" name="description" tuiTextarea [(ngModel)]="description"></textarea>
+    </tui-textfield>
+    <small>Data: {{ today }}</small>
+    <footer>
+      <button tuiButton type="button" appearance="secondary" (click)="dialogOpen = false">Cancelar</button>
+      <button tuiButton type="submit" [disabled]="!canRegister">Registrar</button>
+    </footer>
+  </form>
+</ng-template>

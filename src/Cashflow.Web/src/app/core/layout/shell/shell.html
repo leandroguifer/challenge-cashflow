@@ -1,0 +1,88 @@
+<header tuiNavigationHeader [attr.tuiTheme]="theme">
+  <a tuiNavigationLogo routerLink="/">
+    <tui-icon icon="@tui.landmark" />
+    Fernandes Mecânica
+  </a>
+
+  <span class="spacer"></span>
+
+  @if (storeContext.canChoose()) {
+    <button
+      tuiButton
+      size="s"
+      appearance="flat"
+      iconStart="@tui.store"
+      tuiChevron
+      [tuiDropdown]="storeMenu"
+      [(tuiDropdownOpen)]="storeMenuOpen"
+    >
+      {{ storeContext.label() }}
+    </button>
+    <ng-template #storeMenu>
+      <tui-data-list>
+        <button tuiOption (click)="selectStore(allStores)">Todas as lojas</button>
+        @for (store of auth.stores(); track store.id) {
+          <button tuiOption (click)="selectStore(store.id)">{{ store.name }}</button>
+        }
+      </tui-data-list>
+    </ng-template>
+  } @else {
+    <span class="store">
+      <tui-icon icon="@tui.store" />
+      {{ storeContext.label() }}
+    </span>
+  }
+</header>
+
+<div class="layout">
+  <aside [tuiNavigationAside]="expanded()" [attr.tuiTheme]="theme">
+    <header>
+      <button
+        tuiAsideItem
+        iconStart="@tui.panel-left"
+        (click)="expanded.set(!expanded())"
+      >
+        {{ expanded() ? 'Recolher menu' : 'Expandir menu' }}
+      </button>
+    </header>
+
+    @for (group of menu(); track group.label) {
+      <tui-aside-group [open]="true">
+        <button tuiAsideItem tuiChevron [iconStart]="group.icon">{{ group.label }}</button>
+        <ng-template>
+          @for (item of group.items; track item.route) {
+            <a tuiAsideItem routerLinkActive [iconStart]="item.icon" [routerLink]="item.route">
+              {{ item.label }}
+            </a>
+          }
+        </ng-template>
+      </tui-aside-group>
+    }
+
+    <footer>
+      <tui-aside-group>
+        <button tuiAsideItem tuiChevron iconStart="@tui.circle-user">{{ auth.name() }}</button>
+        <ng-template>
+          <div class="user">
+            <span tuiAvatar size="s" [round]="true">{{ initials() }}</span>
+            <div>
+              <strong>{{ auth.name() }}</strong>
+              <small>{{ auth.email() }}</small>
+              <small>{{ roleLabel() }}</small>
+            </div>
+          </div>
+          <button tuiAsideItem iconStart="@tui.log-out" (click)="logout()">Sair</button>
+        </ng-template>
+      </tui-aside-group>
+    </footer>
+  </aside>
+
+  <main tuiNavigationMain>
+    <tui-breadcrumbs>
+      @for (crumb of crumbs(); track crumb) {
+        <span *tuiItem>{{ crumb }}</span>
+      }
+    </tui-breadcrumbs>
+    <router-outlet />
+  </main>
+</div>

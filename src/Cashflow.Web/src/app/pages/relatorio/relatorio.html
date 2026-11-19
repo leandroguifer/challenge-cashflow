@@ -1,0 +1,27 @@
+<header class="head">
+  <h1>Relatório do dia</h1>
+  <p>{{ today }} · {{ storeLabel() }}</p>
+</header>
+
+<div class="cards">
+  <section tuiCardLarge>
+    <small>Créditos</small>
+    <strong>{{ summary().credits | tuiAmount: 'BRL' }}</strong>
+  </section>
+  <section tuiCardLarge>
+    <small>Débitos</small>
+    <strong>{{ summary().debits | tuiAmount: 'BRL' }}</strong>
+  </section>
+  <section tuiCardLarge>
+    <small>Saldo</small>
+    <strong>{{ summary().balance | tuiAmount: 'BRL' }}</strong>
+  </section>
+</div>
+
+@if (rows().length === 0) {
+  <tui-block-status>
+    <h2>Nenhum lançamento hoje</h2>
+  </tui-block-status>
+} @else {
+  <app-entries-table [rows]="rows()" [showStore]="showStore()" />
+}

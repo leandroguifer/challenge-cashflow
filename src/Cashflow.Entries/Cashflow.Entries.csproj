@@ -14,4 +14,10 @@
     <ProjectReference Include="..\Cashflow.Core\Cashflow.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Cashflow.Entries.Tests" />
+    <InternalsVisibleTo Include="Cashflow.Integration.Tests" />
+    <InternalsVisibleTo Include="Cashflow.Architecture.Tests" />
+  </ItemGroup>
+
 </Project>

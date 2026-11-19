@@ -1,0 +1,21 @@
+<header class="head">
+  <h1>Saldo diário</h1>
+  <p>{{ today }}</p>
+</header>
+
+<div class="cards">
+  @for (card of cards(); track card.store.id) {
+    <section tuiCardLarge>
+      <small>{{ card.store.name }}</small>
+      <strong>{{ card.balance.balance | tuiAmount: 'BRL' }}</strong>
+      <span [tuiStatus]="statusColor[card.balance.status]">{{ statusLabel[card.balance.status] }}</span>
+    </section>
+  }
+</div>
+
+@if (showTotal()) {
+  <section tuiCardLarge class="total">
+    <small>Total {{ cards().length > 1 ? 'da empresa' : 'da loja selecionada' }}</small>
+    <strong>{{ total() | tuiAmount: 'BRL' }}</strong>
+  </section>
+}

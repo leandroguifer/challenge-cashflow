@@ -53,6 +53,9 @@ importers:
       '@taiga-ui/styles':
         specifier: ^5.33.0
         version: 5.33.0(@taiga-ui/design-tokens@0.329.0)
+      keycloak-js:
+        specifier: ^26.2.5
+        version: 26.2.5
       rxjs:
         specifier: ~7.8.0
         version: 7.8.2
@@ -2045,6 +2048,9 @@ packages:
 
   jsonc-parser@3.3.1:
     resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==}
+
+  keycloak-js@26.2.5:
+    resolution: {integrity: sha512-iTR3hmYXlGZbBTskgr2PrGIfIzLrts8nwja2+D1gW6Q/S83C487rhM+WvPV9dxqXv81N0QwNG9BJAM60eDQ1Yw==}
 
   libphonenumber-js@1.13.16:
     resolution: {integrity: sha512-tIOCM9yx2Go6d5/ZANe0K+G4AZek1Ymx81HxQpf19Sri4zMP95eQbKdnUGHAvFQ4nx0PeLhFqvAfisTADXj3tQ==}
@@ -4334,6 +4340,8 @@ snapshots:
   json5@2.2.3: {}
 
   jsonc-parser@3.3.1: {}
+
+  keycloak-js@26.2.5: {}
 
   libphonenumber-js@1.13.16: {}
 

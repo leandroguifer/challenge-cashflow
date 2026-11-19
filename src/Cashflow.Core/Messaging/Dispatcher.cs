@@ -28,7 +28,7 @@ public sealed class Dispatcher : IDispatcher
         var handler = services.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
         if (handler is null)
         {
-            return Result.Failure<TResponse>(new ResultError("DS0001",$"No handler registered for {typeof(TRequest).Name}"));
+            return Result.Failure<TResponse>(new ResultError("dispatcher.no_handler", $"No handler registered for {typeof(TRequest).Name}"));
         }
 
         return await handler.HandleAsync(request, cancellationToken);

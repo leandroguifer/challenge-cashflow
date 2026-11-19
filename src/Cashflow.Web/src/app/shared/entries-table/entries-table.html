@@ -1,0 +1,30 @@
+<table tuiTable [columns]="columns()">
+  <thead tuiThead>
+    <tr tuiThGroup>
+      @if (showStore()) {
+        <th *tuiHead="'store'" tuiTh>Loja</th>
+      }
+      <th *tuiHead="'time'" tuiTh>Hora</th>
+      <th *tuiHead="'type'" tuiTh>Tipo</th>
+      <th *tuiHead="'description'" tuiTh>Descrição</th>
+      <th *tuiHead="'amount'" tuiTh [style.text-align]="'end'">Valor</th>
+    </tr>
+  </thead>
+  <tbody tuiTbody [data]="rows()">
+    @for (row of rows(); track row.id) {
+      <tr tuiTr>
+        @if (showStore()) {
+          <td *tuiCell="'store'" tuiTd>{{ row.store }}</td>
+        }
+        <td *tuiCell="'time'" tuiTd>{{ row.time }}</td>
+        <td *tuiCell="'type'" tuiTd>
+          <span [tuiStatus]="row.type === 'entrada' ? 'var(--tui-status-positive)' : 'var(--tui-status-negative)'">
+            {{ row.type === 'entrada' ? 'Entrada' : 'Saída' }}
+          </span>
+        </td>
+        <td *tuiCell="'description'" tuiTd>{{ row.description }}</td>
+        <td *tuiCell="'amount'" tuiTd [style.text-align]="'end'">{{ row.amount | tuiAmount: 'BRL' }}</td>
+      </tr>
+    }
+  </tbody>
+</table>

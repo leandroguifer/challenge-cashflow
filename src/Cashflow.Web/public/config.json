@@ -1,0 +1,7 @@
+{
+  "keycloakUrl": "http://localhost:28080",
+  "keycloakRealm": "cashflow",
+  "keycloakClientId": "cashflow-web",
+  "entriesApiUrl": "http://localhost:25001",
+  "balanceApiUrl": "http://localhost:25002"
+}
