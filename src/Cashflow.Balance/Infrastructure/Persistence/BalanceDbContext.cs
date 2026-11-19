@@ -12,11 +12,13 @@ internal sealed class BalanceDbContext : CashflowDbContext
     }
 
     public DbSet<DailyBalance> DailyBalances => Set<DailyBalance>();
+    public DbSet<ProcessedEvent> ProcessedEvents => Set<ProcessedEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(DailyBalanceConfiguration).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(ProcessedEventConfiguration).Assembly);
 
         base.OnModelCreating(modelBuilder);
 

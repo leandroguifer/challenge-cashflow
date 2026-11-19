@@ -15,6 +15,7 @@ internal sealed class EntriesModule : IModule
     {
         services.AddObservability("cashflow-entries");
         services.AddKeycloakAuthentication(configuration);
+        services.AddWebCors(configuration);
         services.AddEntriesPersistence(configuration);
         services.AddHostedService<EntriesMigrationService>();
         services.AddSingleton(TimeProvider.System);

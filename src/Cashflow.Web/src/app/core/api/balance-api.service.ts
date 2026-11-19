@@ -1,24 +1,48 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { CashStatus, DayCash, EntriesApiService } from './entries-api.service';
+import { firstValueFrom } from 'rxjs';
+import { AppConfigService } from '../config/app-config';
 
 export interface DailyBalance {
+  readonly storeId: string;
+  readonly businessDate: string;
   readonly credits: number;
   readonly debits: number;
   readonly balance: number;
-  readonly status: CashStatus;
+  readonly entryCount: number;
+}
+
+interface DailyBalanceDto {
+  readonly storeId: string;
+  readonly businessDate: string;
+  readonly totalCredits: number;
+  readonly totalDebits: number;
+  readonly balance: number;
+  readonly entryCount: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class BalanceApiService {
-  private readonly entries = inject(EntriesApiService);
+  private readonly http = inject(HttpClient);
+  private readonly config = inject(AppConfigService);
 
-  daily(storeId: string): DailyBalance {
-    return summarize(this.entries.day(storeId));
+  async list(startDate: string, endDate: string, storeId?: string): Promise<readonly DailyBalance[]> {
+    let params = new HttpParams().set('startDate', startDate).set('endDate', endDate);
+    if (storeId) {
+      params = params.set('storeId', storeId);
+    }
+
+    const items = await firstValueFrom(
+      this.http.get<readonly DailyBalanceDto[]>(`${this.config.config.balanceApiUrl}/api/v1/daily-balances`, { params }),
+    );
+
+    return items.map((dto) => ({
+      storeId: dto.storeId,
+      businessDate: dto.businessDate,
+      credits: dto.totalCredits,
+      debits: dto.totalDebits,
+      balance: dto.balance,
+      entryCount: dto.entryCount,
+    }));
   }
-}
-
-export function summarize(day: DayCash): DailyBalance {
-  const credits = day.entries.filter((e) => e.type === 'entrada').reduce((sum, e) => sum + e.amount, 0);
-  const debits = day.entries.filter((e) => e.type === 'saida').reduce((sum, e) => sum + e.amount, 0);
-  return { credits, debits, balance: credits - debits, status: day.status };
 }

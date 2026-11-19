@@ -1,16 +1,19 @@
+@let current = day();
+
+@if (current) {
 <header class="head">
   <div>
     <h1>Caixa do dia</h1>
     <p>{{ store().name }} · {{ today }}</p>
   </div>
-  <span [tuiStatus]="statusColor[day().status]">{{ statusLabel[day().status] }}</span>
+  <span [tuiStatus]="current.status === 'aberto' ? 'positive' : current.status === 'fechado' ? 'negative' : 'neutral'">{{ statusLabel[current.status] }}</span>
 </header>
 
-@if (day().status === 'nao-aberto') {
+@if (current.status === 'nao-aberto') {
   <tui-block-status>
     <h2>O caixa de hoje ainda não foi aberto</h2>
     <p>Abra o caixa para começar a registrar entradas e saídas.</p>
-    <button tuiButton size="m" (click)="open()">Abrir caixa</button>
+    <button tuiButton size="m" [disabled]="busy()" (click)="open()">Abrir caixa</button>
   </tui-block-status>
 } @else {
   <div class="cards">
@@ -29,7 +32,7 @@
   </div>
 
   <div class="actions">
-    <button tuiButton size="m" iconStart="@tui.plus" [disabled]="day().status === 'fechado'" (click)="startEntry('entrada')">
+    <button tuiButton size="m" iconStart="@tui.plus" [disabled]="busy() || current.status === 'fechado'" (click)="startEntry('entrada')">
       Entrada
     </button>
     <button
@@ -37,20 +40,21 @@
       size="m"
       appearance="secondary"
       iconStart="@tui.minus"
-      [disabled]="day().status === 'fechado'"
+      [disabled]="busy() || current.status === 'fechado'"
       (click)="startEntry('saida')"
     >
       Saída
     </button>
     <span class="spacer"></span>
-    @if (day().status === 'fechado') {
+    @if (current.status === 'fechado') {
       <small>Dia encerrado. Não aceita mais lançamentos.</small>
     } @else {
-      <button tuiButton size="m" appearance="action-destructive" (click)="close()">Fechar caixa</button>
+      <button tuiButton size="m" appearance="action-destructive" [disabled]="busy()" (click)="close()">Fechar caixa</button>
     }
   </div>
 
   <app-entries-table [rows]="rows()" />
+}
 }
 
 <ng-template [(tuiDialog)]="dialogOpen">

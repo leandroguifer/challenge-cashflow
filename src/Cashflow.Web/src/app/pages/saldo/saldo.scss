@@ -41,3 +41,8 @@ section {
   border: 1px solid var(--tui-border-normal);
   border-radius: var(--tui-radius-l);
 }
+
+.muted {
+  margin: 0;
+  color: var(--tui-text-secondary);
+}

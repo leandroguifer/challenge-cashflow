@@ -83,8 +83,10 @@ services:
       context: .
       dockerfile: src/Cashflow.Balance/Dockerfile
     environment:
+      ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Default: ${BALANCE_DB_DEFAULT}
       ConnectionStrings__Migrations: ${BALANCE_DB_MIGRATIONS}
+      ConnectionStrings__Consumer: ${BALANCE_DB_CONSUMER}
       RabbitMq__Host: rabbitmq
       RabbitMq__User: ${RABBITMQ_USER}
       RabbitMq__Password: ${RABBITMQ_PASSWORD}

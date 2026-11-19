@@ -6,7 +6,7 @@ namespace Cashflow.Core.Messaging;
 
 public sealed class Dispatcher : IDispatcher
 {
-    private static readonly MethodInfo InvokeMethod = typeof(Dispatcher).GetMethod(nameof(Invoke), BindingFlags.NonPublic | BindingFlags.Instance)!;
+    private static readonly MethodInfo InvokeMethod = typeof(Dispatcher).GetMethod(nameof(Invoke), BindingFlags.NonPublic | BindingFlags.Static)!;
     private IServiceProvider Services { get; }
 
     public Dispatcher(IServiceProvider services)

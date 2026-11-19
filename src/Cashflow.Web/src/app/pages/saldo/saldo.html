@@ -3,19 +3,31 @@
   <p>{{ today }}</p>
 </header>
 
-<div class="cards">
-  @for (card of cards(); track card.store.id) {
-    <section tuiCardLarge>
-      <small>{{ card.store.name }}</small>
-      <strong>{{ card.balance.balance | tuiAmount: 'BRL' }}</strong>
-      <span [tuiStatus]="statusColor[card.balance.status]">{{ statusLabel[card.balance.status] }}</span>
+@if (balances.error()) {
+  <tui-block-status>
+    <h2>Não foi possível carregar o saldo</h2>
+    <button tuiButton size="m" (click)="balances.reload()">Tentar novamente</button>
+  </tui-block-status>
+} @else if (balances.isLoading()) {
+  <p class="muted">Carregando…</p>
+} @else {
+  <div class="cards">
+    @for (card of cards(); track card.store.id) {
+      <section tuiCardLarge>
+        <small>{{ card.store.name }}</small>
+        <strong>{{ card.balance | tuiAmount: 'BRL' }}</strong>
+        <small>
+          Entradas {{ card.credits | tuiAmount: 'BRL' }} · Saídas {{ card.debits | tuiAmount: 'BRL' }} ·
+          {{ card.entryCount }} lançamentos
+        </small>
+      </section>
+    }
+  </div>
+
+  @if (showTotal()) {
+    <section tuiCardLarge class="total">
+      <small>Total {{ cards().length > 1 ? 'da empresa' : 'da loja selecionada' }}</small>
+      <strong>{{ total() | tuiAmount: 'BRL' }}</strong>
     </section>
   }
-</div>
-
-@if (showTotal()) {
-  <section tuiCardLarge class="total">
-    <small>Total {{ cards().length > 1 ? 'da empresa' : 'da loja selecionada' }}</small>
-    <strong>{{ total() | tuiAmount: 'BRL' }}</strong>
-  </section>
 }

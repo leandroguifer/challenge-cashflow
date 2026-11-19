@@ -1,10 +1,13 @@
-import { Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { AppConfigService } from '../config/app-config';
 
 export type EntryType = 'entrada' | 'saida';
 export type CashStatus = 'nao-aberto' | 'aberto' | 'fechado';
 
 export interface Entry {
-  readonly id: number;
+  readonly id: string;
   readonly time: string;
   readonly type: EntryType;
   readonly description: string;
@@ -16,59 +19,88 @@ export interface DayCash {
   readonly entries: readonly Entry[];
 }
 
-const EMPTY_DAY: DayCash = { status: 'nao-aberto', entries: [] };
+interface CashRegisterDto {
+  readonly status: 'Open' | 'Closed';
+}
 
-const SEED: Record<string, DayCash> = {
-  LOJA01: {
-    status: 'aberto',
-    entries: [
-      { id: 1, time: '09:12', type: 'entrada', description: 'Troca de óleo', amount: 180 },
-      { id: 2, time: '10:40', type: 'saida', description: 'Compra de filtros', amount: 90 },
-      { id: 3, time: '11:25', type: 'entrada', description: 'Alinhamento e balanceamento', amount: 220 },
-    ],
-  },
-  LOJA02: {
-    status: 'aberto',
-    entries: [
-      { id: 4, time: '08:50', type: 'entrada', description: 'Revisão completa', amount: 650 },
-      { id: 5, time: '11:05', type: 'saida', description: 'Peças', amount: 320 },
-    ],
-  },
-  LOJA03: {
-    status: 'fechado',
-    entries: [
-      { id: 6, time: '09:30', type: 'entrada', description: 'Troca de pastilhas', amount: 2300 },
-      { id: 7, time: '15:10', type: 'saida', description: 'Fornecedor de peças', amount: 200 },
-    ],
-  },
-};
+interface EntryDto {
+  readonly id: string;
+  readonly type: 'Credit' | 'Debit';
+  readonly amount: number;
+  readonly description: string | null;
+  readonly createdAt: string;
+}
+
+interface CashRegisterDayDto {
+  readonly cashRegister: CashRegisterDto | null;
+  readonly entries: readonly EntryDto[];
+}
+
+const TYPE_TO_API: Record<EntryType, EntryDto['type']> = { entrada: 'Credit', saida: 'Debit' };
+
+function toEntry(dto: EntryDto): Entry {
+  return {
+    id: dto.id,
+    time: new Date(dto.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    type: dto.type === 'Credit' ? 'entrada' : 'saida',
+    description: dto.description ?? '',
+    amount: dto.amount,
+  };
+}
+
+function toDay(dto: CashRegisterDayDto): DayCash {
+  if (!dto.cashRegister) {
+    return { status: 'nao-aberto', entries: [] };
+  }
+  return {
+    status: dto.cashRegister.status === 'Open' ? 'aberto' : 'fechado',
+    entries: dto.entries.map(toEntry),
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class EntriesApiService {
-  private nextId = 100;
-  private readonly state = signal<Record<string, DayCash>>(SEED);
+  private readonly http = inject(HttpClient);
+  private readonly config = inject(AppConfigService);
+  private readonly state = signal<Record<string, DayCash>>({});
 
   readonly days = this.state.asReadonly();
 
-  day(storeId: string): DayCash {
-    return this.state()[storeId] ?? EMPTY_DAY;
+  async load(storeId: string): Promise<void> {
+    const dto = await firstValueFrom(this.http.get<CashRegisterDayDto>(`${this.url(storeId)}/cash-register/today`));
+    this.state.update((current) => ({ ...current, [storeId]: toDay(dto) }));
   }
 
-  openCash(storeId: string): void {
-    this.update(storeId, () => ({ status: 'aberto', entries: [] }));
+  async openCash(storeId: string): Promise<void> {
+    await firstValueFrom(this.http.post(`${this.url(storeId)}/cash-register/open`, null));
+    await this.load(storeId);
   }
 
-  closeCash(storeId: string): void {
-    this.update(storeId, (day) => ({ ...day, status: 'fechado' }));
+  async closeCash(storeId: string): Promise<void> {
+    await firstValueFrom(this.http.post(`${this.url(storeId)}/cash-register/close`, null));
+    await this.load(storeId);
   }
 
-  register(storeId: string, type: EntryType, amount: number, description: string): void {
-    const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    const entry: Entry = { id: this.nextId++, time, type, description, amount };
-    this.update(storeId, (day) => ({ ...day, entries: [...day.entries, entry] }));
+  async register(storeId: string, type: EntryType, amount: number, description: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${this.url(storeId)}/entries`, { type: TYPE_TO_API[type], amount, description }),
+    );
+    await this.load(storeId);
   }
 
-  private update(storeId: string, change: (day: DayCash) => DayCash): void {
-    this.state.update((current) => ({ ...current, [storeId]: change(current[storeId] ?? EMPTY_DAY) }));
+  private url(storeId: string): string {
+    return `${this.config.config.entriesApiUrl}/api/v1/stores/${encodeURIComponent(storeId)}`;
   }
+}
+
+export interface DaySummary {
+  readonly credits: number;
+  readonly debits: number;
+  readonly balance: number;
+}
+
+export function summarize(day: DayCash): DaySummary {
+  const credits = day.entries.filter((e) => e.type === 'entrada').reduce((sum, e) => sum + e.amount, 0);
+  const debits = day.entries.filter((e) => e.type === 'saida').reduce((sum, e) => sum + e.amount, 0);
+  return { credits, debits, balance: credits - debits };
 }

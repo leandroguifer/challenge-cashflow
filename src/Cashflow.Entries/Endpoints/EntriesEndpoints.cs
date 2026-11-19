@@ -11,6 +11,9 @@ internal static class EntriesEndpoints
     {
         var group = endpoints.MapGroup("/api/v1/stores/{storeId}");
 
+        group.MapGet("/cash-register/today", async (string storeId, IDispatcher dispatcher, CancellationToken cancellationToken) =>
+            (await dispatcher.SendAsync(new GetCashRegisterDayQuery(storeId), cancellationToken)).ToHttpResult());
+
         group.MapPost("/cash-register/open", async (string storeId, IDispatcher dispatcher, CancellationToken cancellationToken) =>
             (await dispatcher.SendAsync(new OpenCashRegisterCommand(storeId), cancellationToken)).ToHttpResult());
 
