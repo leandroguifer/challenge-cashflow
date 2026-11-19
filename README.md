@@ -1,4 +1,4 @@
-# Desafio Banco Carrefur
+# Desafio Fluxo de Caixa
 
 Este desafio é proposto pela **Verx** a pedido do cliente para avaliação de candidatos a vaga de *Arquiteto de Soluções*. O texto original do desafio está em: [Desafio](docs/desafio.pdf).
 
