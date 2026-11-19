@@ -6,8 +6,8 @@ namespace Cashflow.Core.Security;
 public class CurrentUser : ICurrentUser
 {
     private ClaimsPrincipal? Principal;
+    public string UserName => Principal?.Identity?.Name ?? string.Empty;
     public bool IsAuthenticated => Principal?.Identity?.IsAuthenticated ?? false;
-
     public IReadOnlyList<string> Stores
     {
         get

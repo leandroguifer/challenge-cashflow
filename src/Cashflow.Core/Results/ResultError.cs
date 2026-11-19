@@ -1,3 +1,3 @@
 namespace Cashflow.Core.Results;
 
-public sealed record ResultError(string Code, string Message);
+public sealed record ResultError(string Code, string Message, ResultErrorKind Kind = ResultErrorKind.Validation);

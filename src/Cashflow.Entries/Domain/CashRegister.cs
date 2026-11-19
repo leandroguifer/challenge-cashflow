@@ -17,7 +17,7 @@ internal sealed class CashRegister
     public string? ClosedBy { get; private set; } = string.Empty;
     public DateTimeOffset? ClosedAt { get; private set; }
 
-    public static Result<CashRegister> Open(string storeId, DateOnly businessDate, string openedBy)
+    public static Result<CashRegister> Open(string storeId, DateOnly businessDate, string openedBy, DateTimeOffset openedAt)
     {
         if (string.IsNullOrWhiteSpace(storeId))
             return Result.Failure<CashRegister>(CashRegisterErrors.StoreRequired);
@@ -29,7 +29,7 @@ internal sealed class CashRegister
             BusinessDate = businessDate,
             Status = CashRegisterStatus.Open,
             OpenedBy = openedBy,
-            OpenedAt = DateTimeOffset.UtcNow
+            OpenedAt = openedAt
         };
 
         return Result.Success(cashRegister);

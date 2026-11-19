@@ -1,3 +1,4 @@
+using Cashflow.Entries.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cashflow.Entries.Infrastructure.Persistence;
@@ -8,9 +9,12 @@ internal static class PersistenceExtensions
     {
         var connectionString = configuration.GetConnectionString("Default");
         ArgumentNullException.ThrowIfNull(connectionString, "Connection string 'Default' not found.");
-        
+
         services.AddDbContext<EntriesDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        services.AddScoped<ICashRegisterRepository, CashRegisterRepository>();
+        services.AddScoped<IUnitOfWork, EntriesUnitOfWork>();
 
         return services;
     }

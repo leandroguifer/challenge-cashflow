@@ -61,6 +61,7 @@ services:
       context: .
       dockerfile: src/Cashflow.Entries/Dockerfile
     environment:
+      ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__Default: ${ENTRIES_DB_DEFAULT}
       ConnectionStrings__Migrations: ${ENTRIES_DB_MIGRATIONS}
       RabbitMq__Host: rabbitmq
