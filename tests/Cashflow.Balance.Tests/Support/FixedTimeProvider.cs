@@ -1,0 +1,6 @@
+namespace Cashflow.Balance.Tests.Support;
+
+internal sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
+{
+    public override DateTimeOffset GetUtcNow() => now;
+}
