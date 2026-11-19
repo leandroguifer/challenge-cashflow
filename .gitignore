@@ -1,0 +1,22 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+TestResults/
+coverage/
+*.log
+
+# IDEs
+.vs/
+.vscode/
+.idea/
+
+# Segredos e ambiente
+.env
+*.pfx
+!.env.example
+
+# Sistema
+.DS_Store
+Thumbs.db
