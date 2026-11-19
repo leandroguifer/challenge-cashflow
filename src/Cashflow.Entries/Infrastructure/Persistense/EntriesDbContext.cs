@@ -11,8 +11,8 @@ internal sealed class EntriesDbContext : CashflowDbContext
     {
     }
 
-    public DbSet<CashRegister> CashRegisters { get; set; } = null!;
-    public DbSet<Entry> Entries { get; set; } = null!;
+    public DbSet<CashRegister> CashRegisters  => Set<CashRegister>();
+    public DbSet<Entry> Entries  => Set<Entry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
