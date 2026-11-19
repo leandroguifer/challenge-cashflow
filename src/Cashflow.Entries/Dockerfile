@@ -11,6 +11,6 @@ RUN dotnet publish src/Cashflow.Entries/Cashflow.Entries.csproj -c Release -o /a
 FROM mcr.microsoft.com/dotnet/aspnet:11.0 AS runtime
 WORKDIR /app
 COPY --from=build /app .
-ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_HTTP_PORTS=8080
 EXPOSE 8080
 ENTRYPOINT ["dotnet", "Cashflow.Entries.dll"]

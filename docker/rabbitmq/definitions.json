@@ -1,0 +1,41 @@
+{
+  "users": [
+    { "name": "@RABBITMQ_ADMIN_USER@", "password": "@RABBITMQ_ADMIN_PASSWORD@", "tags": "administrator" },
+    { "name": "@ENTRIES_RABBITMQ_USER@", "password": "@ENTRIES_RABBITMQ_PASSWORD@", "tags": "" },
+    { "name": "@BALANCE_RABBITMQ_USER@", "password": "@BALANCE_RABBITMQ_PASSWORD@", "tags": "" }
+  ],
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "permissions": [
+    { "user": "@RABBITMQ_ADMIN_USER@", "vhost": "/", "configure": ".*", "write": ".*", "read": ".*" },
+    { "user": "@ENTRIES_RABBITMQ_USER@", "vhost": "/", "configure": "^$", "write": "^entries[.]events$", "read": "^$" },
+    { "user": "@BALANCE_RABBITMQ_USER@", "vhost": "/", "configure": "^$", "write": "^$", "read": "^balance[.]entry-posted$" }
+  ],
+  "exchanges": [
+    { "name": "entries.events", "vhost": "/", "type": "topic", "durable": true, "auto_delete": false, "internal": false, "arguments": {} }
+  ],
+  "queues": [
+    { "name": "balance.entry-posted.dlq", "vhost": "/", "durable": true, "auto_delete": false, "arguments": {} },
+    {
+      "name": "balance.entry-posted",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "balance.entry-posted.dlq"
+      }
+    }
+  ],
+  "bindings": [
+    {
+      "source": "entries.events",
+      "vhost": "/",
+      "destination": "balance.entry-posted",
+      "destination_type": "queue",
+      "routing_key": "entries.entry-posted",
+      "arguments": {}
+    }
+  ]
+}
