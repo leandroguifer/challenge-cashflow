@@ -1,4 +1,5 @@
 using Cashflow.Balance.Application.Abstractions;
+using Cashflow.Core.Data;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

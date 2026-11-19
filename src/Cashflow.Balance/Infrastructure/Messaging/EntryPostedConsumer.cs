@@ -3,6 +3,7 @@ using Cashflow.Balance.Application.Consumption;
 using Cashflow.Balance.Contracts;
 using Cashflow.Balance.Domain;
 using Cashflow.Core.Messaging;
+using Cashflow.Core.Observability;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,10 +18,7 @@ internal sealed partial class EntryPostedConsumer(
     IOptions<RabbitMqOptions> options,
     ILogger<EntryPostedConsumer> logger) : BackgroundService
 {
-    private const string Exchange = "entries.events";
-    private const string RoutingKey = "entries.entry-posted";
     private const string Queue = "balance.entry-posted";
-    private const string DeadLetterQueue = "balance.entry-posted.dlq";
     private const ushort PrefetchCount = 20;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -59,20 +57,6 @@ internal sealed partial class EntryPostedConsumer(
         await using var connection = await factory.CreateConnectionAsync(stoppingToken);
         await using var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
-        await channel.ExchangeDeclareAsync(Exchange, ExchangeType.Topic, durable: true, cancellationToken: stoppingToken);
-        await channel.QueueDeclareAsync(DeadLetterQueue, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
-        await channel.QueueDeclareAsync(
-            Queue,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: new Dictionary<string, object?>
-            {
-                ["x-dead-letter-exchange"] = string.Empty,
-                ["x-dead-letter-routing-key"] = DeadLetterQueue
-            },
-            cancellationToken: stoppingToken);
-        await channel.QueueBindAsync(Queue, Exchange, RoutingKey, cancellationToken: stoppingToken);
         await channel.BasicQosAsync(0, PrefetchCount, false, stoppingToken);
 
         var consumer = new AsyncEventingBasicConsumer(channel);
@@ -85,6 +69,8 @@ internal sealed partial class EntryPostedConsumer(
 
     private async Task HandleAsync(IChannel channel, BasicDeliverEventArgs args, CancellationToken cancellationToken)
     {
+        using var activity = MessagingTelemetry.StartConsumer("entries.entry-posted process", args.BasicProperties.Headers);
+
         try
         {
             var message = JsonSerializer.Deserialize<EntryPostedEvent>(args.Body.Span, JsonOptions);

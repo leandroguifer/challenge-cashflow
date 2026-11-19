@@ -1,10 +1,10 @@
 using Cashflow.Balance;
+using Cashflow.Core.Documentation;
 using Cashflow.Core.Security;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
+builder.Services.AddApiDocumentation();
 
 var module = new BalanceModule();
 module.ConfigureServices(builder.Services, builder.Configuration);
@@ -13,13 +13,10 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi().AllowAnonymous();
-    app.MapScalarApiReference().AllowAnonymous();
+    app.MapApiDocumentation();
 }
 
-app.UseWebCors();
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseApiSecurity();
 
 module.MapEndpoints(app);
 

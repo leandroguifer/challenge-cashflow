@@ -5,4 +5,6 @@ namespace Cashflow.Balance.Application.Abstractions;
 internal interface IDailyBalanceReader
 {
     Task<IReadOnlyList<DailyBalanceResponse>> ListAsync(string? storeId, DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<CompanyDailyBalanceResponse>> ListCompanyAsync(DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken);
 }

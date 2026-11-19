@@ -12,7 +12,7 @@ internal sealed class BalanceModule : IModule
 {
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddObservability("balance");
+        services.AddObservability("cashflow-balance");
         services.AddKeycloakAuthentication(configuration);
         services.AddWebCors(configuration);
         services.AddBalancePersistence(configuration);

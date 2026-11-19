@@ -53,6 +53,21 @@ namespace Cashflow.Balance.Infrastructure.Persistence.Migrations
 
                     b.ToTable("daily_balances");
                 });
+
+            modelBuilder.Entity("Cashflow.Balance.Infrastructure.Persistence.ProcessedEvent", b =>
+                {
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<DateTimeOffset>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at");
+
+                    b.HasKey("EventId");
+
+                    b.ToTable("processed_events");
+                });
 #pragma warning restore 612, 618
         }
     }
