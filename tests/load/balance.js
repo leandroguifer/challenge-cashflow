@@ -32,7 +32,7 @@ export const options = {
   },
   thresholds: {
     http_req_failed: ['rate<0.05'],
-    'http_req_duration{endpoint:daily_balances}': ['p(95)<500'],
+    'http_req_duration{endpoint:daily_balances}': ['p(99)<500'],
     dropped_iterations: ['count==0'],
   },
   summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
