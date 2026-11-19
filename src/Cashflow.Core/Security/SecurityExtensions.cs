@@ -9,7 +9,7 @@ public static class SecurityExtensions
 {
     public static void AddKeycloakAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        var options = configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>() ?? new KeycloakOptions();
+        var keycloakOptions = configuration.GetSection(KeycloakOptions.SectionName).Get<KeycloakOptions>() ?? new KeycloakOptions();
 
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
@@ -17,9 +17,9 @@ public static class SecurityExtensions
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer("Bearer", options =>
         {
-            options.Authority = options.Authority;
-            options.Audience = options.Audience;
-            options.RequireHttpsMetadata = options.RequireHttpsMetadata;
+            options.Authority = keycloakOptions.Authority;
+            options.Audience = keycloakOptions.Audience;
+            options.RequireHttpsMetadata = keycloakOptions.RequireHttpsMetadata;
             options.MapInboundClaims = false;
             options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
             {

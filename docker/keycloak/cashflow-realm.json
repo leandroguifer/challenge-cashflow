@@ -1,0 +1,145 @@
+{
+  "realm": "cashflow",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "caixa" },
+      { "name": "proprietario" },
+      { "name": "auxiliar" }
+    ]
+  },
+  "groups": [
+    {
+      "name": "Empresa",
+      "path": "/Empresa",
+      "subGroups": [
+        { "name": "LOJA01", "path": "/Empresa/LOJA01" },
+        { "name": "LOJA02", "path": "/Empresa/LOJA02" },
+        { "name": "LOJA03", "path": "/Empresa/LOJA03" }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "cashflow-entries",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "bearerOnly": true
+    },
+    {
+      "clientId": "cashflow-balance",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "bearerOnly": true
+    },
+    {
+      "clientId": "cashflow-web",
+      "protocol": "openid-connect",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost:24200/*",
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": ["+"],
+      "attributes": { "pkce.code.challenge.method": "S256" },
+      "protocolMappers": [
+        {
+          "name": "aud-entries",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "cashflow-entries",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "aud-balance",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "cashflow-balance",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
+          }
+        },
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "config": {
+            "claim.name": "roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        },
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "config": {
+            "claim.name": "groups",
+            "full.path": "true",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "caixa.loja01",
+      "email": "caixa.loja01@cashflow.local",
+      "firstName": "Caixa",
+      "lastName": "Loja 01",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "cashflow", "temporary": false }],
+      "realmRoles": ["caixa"],
+      "groups": ["/Empresa/LOJA01"]
+    },
+    {
+      "username": "caixa.loja02",
+      "email": "caixa.loja02@cashflow.local",
+      "firstName": "Caixa",
+      "lastName": "Loja 02",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "cashflow", "temporary": false }],
+      "realmRoles": ["caixa"],
+      "groups": ["/Empresa/LOJA02"]
+    },
+    {
+      "username": "auxiliar.loja01",
+      "email": "auxiliar.loja01@cashflow.local",
+      "firstName": "Auxiliar",
+      "lastName": "Loja 01",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "cashflow", "temporary": false }],
+      "realmRoles": ["auxiliar"],
+      "groups": ["/Empresa/LOJA01"]
+    },
+    {
+      "username": "proprietario",
+      "email": "proprietario@cashflow.local",
+      "firstName": "Proprietário",
+      "lastName": "Empresa",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "cashflow", "temporary": false }],
+      "realmRoles": ["proprietario"],
+      "groups": ["/Empresa/LOJA01", "/Empresa/LOJA02", "/Empresa/LOJA03"]
+    }
+  ]
+}

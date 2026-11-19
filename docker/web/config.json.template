@@ -1,0 +1,7 @@
+{
+  "keycloakUrl": "${KEYCLOAK_URL}",
+  "keycloakRealm": "${KEYCLOAK_REALM}",
+  "keycloakClientId": "${KEYCLOAK_CLIENT_ID}",
+  "entriesApiUrl": "${ENTRIES_URL}",
+  "balanceApiUrl": "${BALANCE_URL}"
+}
