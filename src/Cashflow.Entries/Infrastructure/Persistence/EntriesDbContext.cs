@@ -1,5 +1,6 @@
 using Cashflow.Core.Data;
 using Cashflow.Entries.Domain;
+using Cashflow.Entries.Infrastructure.Outbox;
 using Cashflow.Entries.Infrastructure.Persistence.Configuration;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,12 +14,14 @@ internal sealed class EntriesDbContext : CashflowDbContext
 
     public DbSet<CashRegister> CashRegisters  => Set<CashRegister>();
     public DbSet<Entry> Entries  => Set<Entry>();
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
 
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(CashRegisterConfiguration).Assembly);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(EntryConfiguration).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(OutboxMessageConfiguration).Assembly);
 
         base.OnModelCreating(modelBuilder);
 

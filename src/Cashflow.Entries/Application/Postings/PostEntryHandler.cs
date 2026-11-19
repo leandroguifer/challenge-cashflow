@@ -2,12 +2,14 @@ using Cashflow.Core.Messaging;
 using Cashflow.Core.Results;
 using Cashflow.Core.Security;
 using Cashflow.Entries.Application.Abstractions;
+using Cashflow.Entries.Contracts;
 
 namespace Cashflow.Entries.Application.Postings;
 
 internal sealed class PostEntryHandler(
     ICashRegisterRepository repository,
     IUnitOfWork unitOfWork,
+    IOutbox outbox,
     ICurrentUser currentUser,
     BusinessClock clock) : IRequestHandler<PostEntryCommand, EntryResponse>
 {
@@ -32,7 +34,16 @@ internal sealed class PostEntryHandler(
             return Result.Failure<EntryResponse>(posted.Error!);
         }
 
-        repository.AddEntry(posted.Value!);
+        var entry = posted.Value!;
+        repository.AddEntry(entry);
+        outbox.Enqueue(new EntryPostedEvent(
+            Guid.NewGuid(),
+            entry.Id,
+            entry.StoreId,
+            entry.BusinessDate,
+            entry.Type.ToString(),
+            entry.Amount,
+            entry.CreatedAt));
 
         var committed = await unitOfWork.CommitAsync(cancellationToken);
         if (committed.IsFailure)
@@ -40,6 +51,6 @@ internal sealed class PostEntryHandler(
             return Result.Failure<EntryResponse>(committed.Error!);
         }
 
-        return Result.Success(EntryResponse.From(posted.Value!));
+        return Result.Success(EntryResponse.From(entry));
     }
 }

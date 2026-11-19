@@ -5,6 +5,7 @@ using Cashflow.Core.Observability;
 using Cashflow.Core.Security;
 using Cashflow.Entries.Application;
 using Cashflow.Entries.Endpoints;
+using Cashflow.Entries.Infrastructure.Outbox;
 using Cashflow.Entries.Infrastructure.Persistence;
 
 namespace Cashflow.Entries;
@@ -18,6 +19,9 @@ internal sealed class EntriesModule : IModule
         services.AddWebCors(configuration);
         services.AddEntriesPersistence(configuration);
         services.AddHostedService<EntriesMigrationService>();
+        services.Configure<RabbitMqOptions>(configuration.GetSection(RabbitMqOptions.SectionName));
+        services.Configure<OutboxOptions>(configuration.GetSection(OutboxOptions.SectionName));
+        services.AddHostedService<OutboxPublisher>();
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<BusinessClock>();
         services.AddMessaging(typeof(EntriesModule).Assembly);
