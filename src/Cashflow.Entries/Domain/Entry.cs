@@ -4,10 +4,12 @@ namespace Cashflow.Entries.Domain;
 
 internal sealed class Entry
 {
+    public const int MinDescriptionLength = 5;
+    public const int MaxDescriptionLength = 200;
+
     private Entry()
     {
     }
-
     public Guid Id { get; private set; }
     public Guid CashRegisterId { get; private set; }
     public string StoreId { get; private set; } = string.Empty;
@@ -25,6 +27,12 @@ internal sealed class Entry
 
         if (amount <= 0)
             return Result.Failure<Entry>(EntryErrors.InvalidAmount);
+
+        if (string.IsNullOrWhiteSpace(description) || description.Length < MinDescriptionLength)
+            return Result.Failure<Entry>(EntryErrors.DescriptionTooShort);
+
+        if (description.Length > MaxDescriptionLength)
+            return Result.Failure<Entry>(EntryErrors.DescriptionTooLong);
 
         var entry = new Entry
         {
