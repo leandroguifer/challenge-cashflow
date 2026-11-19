@@ -7,10 +7,12 @@ namespace Cashflow.Core.Security;
 public static class CorsExtensions
 {
     private const string PolicyName = "web";
+    private const string OriginsKey = "CORS_ORIGINS";
 
     public static void AddWebCors(this IServiceCollection services, IConfiguration configuration)
     {
-        var origins = configuration.GetSection("Cors:Origins").Get<string[]>() ?? [];
+        var origins = (configuration[OriginsKey] ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         services.AddCors(options => options.AddPolicy(PolicyName, policy => policy
             .WithOrigins(origins)

@@ -22,13 +22,18 @@ public static class ObservabilityExtensions
                     .AddHttpClientInstrumentation()
                     .AddNpgsql()
                     .AddSource(serviceName)
+                    .AddSource(MessagingTelemetry.SourceName)
                     ;
             })
             .WithMetrics(metrics => metrics
                 .AddAspNetCoreInstrumentation()
                 .AddHttpClientInstrumentation()
                 .AddRuntimeInstrumentation())
-                .WithLogging()
+                .WithLogging(configureBuilder: null, configureOptions: options =>
+                {
+                    options.IncludeFormattedMessage = true;
+                    options.IncludeScopes = true;
+                })
                 .UseOtlpExporter()
             ;
     }

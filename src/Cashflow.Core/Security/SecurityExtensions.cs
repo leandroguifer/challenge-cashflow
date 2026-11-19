@@ -35,9 +35,16 @@ public static class SecurityExtensions
             };
         });
 
+        services.RemoveDataProtectionStartup();
+
+        services.AddProblemDetails();
+
         services.AddAuthorizationBuilder()
             .SetFallbackPolicy(new AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
-                .Build());
+                .Build())
+            .AddPolicy(Policies.Cashier, policy => policy.RequireRole(Roles.Cashier))
+            .AddPolicy(Policies.EntriesReader, policy => policy.RequireRole(Roles.Cashier, Roles.Assistant, Roles.Owner))
+            .AddPolicy(Policies.BalanceReader, policy => policy.RequireRole(Roles.Assistant, Roles.Owner));
     }
 }
