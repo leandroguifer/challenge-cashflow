@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  CONFIGURATION: Release
+
+jobs:
+  build-and-test:
+    name: Build, unit and architecture tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore Cashflow.slnx
+
+      - name: Build
+        run: dotnet build Cashflow.slnx --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Unit tests (Entries)
+        run: dotnet test --project tests/Cashflow.Entries.Tests --configuration ${{ env.CONFIGURATION }} --no-build
+
+      - name: Unit tests (Balance)
+        run: dotnet test --project tests/Cashflow.Balance.Tests --configuration ${{ env.CONFIGURATION }} --no-build
+
+      - name: Architecture tests
+        run: dotnet test --project tests/Cashflow.Architecture.Tests --configuration ${{ env.CONFIGURATION }} --no-build
+
+  integration-tests:
+    name: Integration tests (Docker)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Pull test images
+        run: |
+          docker pull postgres:17
+          docker pull rabbitmq:4-management
+
+      - name: Integration tests
+        run: dotnet test --project tests/Cashflow.Integration.Tests --configuration ${{ env.CONFIGURATION }}
