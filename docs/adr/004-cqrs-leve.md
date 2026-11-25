@@ -1,6 +1,6 @@
 # ADR 004: CQRS leve, com EF Core na escrita e Dapper na leitura
 
-* **Data:** 18/11/2026
+
 * **Status:** Aceito
 * **Autores:** Leandro Fernandes
 

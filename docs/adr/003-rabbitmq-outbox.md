@@ -1,6 +1,6 @@
 # ADR 003: RabbitMQ com outbox e consumidor sem duplicidade
 
-* **Data:** 18/11/2026
+
 * **Status:** Aceito
 * **Autores:** Leandro Fernandes
 

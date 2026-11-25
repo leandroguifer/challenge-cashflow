@@ -1,11 +1,11 @@
 # ADR 001: Separar  *Lançamentos* e *Consolidado* em dois serviços
 
-* **Data:** 18/11/2026
+
 * **Status:** Aceito
 * **Autores:** Leandro Fernandes
 
 ## Contexto
-O  RNF01 pede que hava "Isolamento de Falha" e o caixa realiza lançamenteos durante o dia, enquanto o proprietário e o auxiliar administrativo consultam, podendo chegar a um pico de 50 requisições por segundo (RNF02). E o requisito exige que os lançamentos não fiquem indisponíveis, caso o *Consolidado* caia durante o pico exigido.
+O RNF01 pede que haja "Isolamento de Falha" e o caixa realiza lançamentos durante o dia, enquanto o proprietário e o auxiliar administrativo consultam, podendo chegar a um pico de 50 requisições por segundo (RNF02). E o requisito exige que os lançamentos não fiquem indisponíveis, caso o *Consolidado* caia durante o pico exigido.
 
 ## Decisão
 A decisão foi de separar em dois serviços de deploy e bases diferentes.
@@ -16,4 +16,4 @@ A decisão foi de separar em dois serviços de deploy e bases diferentes.
 
 ## Consequências
 * **Positivas:** Garante que mesmo que o *Consolidado* pare, os lançamentos irão continuar
-* **Negativas / Trade-offs:** Como duplicamos serviços e bancos, aumenta o trablhalho para implantar o operar e não temos o caixa atualizando o *Consolidado* na hora
+* **Negativas / Trade-offs:** Como duplicamos serviços e bancos, aumenta o trabalho para implantar e operar e não temos o caixa atualizando o *Consolidado* na hora
