@@ -79,3 +79,33 @@ jobs:
 
       - name: Integration tests
         run: dotnet test --project tests/Cashflow.Integration.Tests --configuration ${{ env.CONFIGURATION }}
+
+  web:
+    name: Frontend build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: src/Cashflow.Web
+    steps:
+      - uses: actions/checkout@v7
+      
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: src/Cashflow.Web/package.json
+      
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'pnpm'
+          cache-dependency-path: src/Cashflow.Web/pnpm-lock.yaml
+      
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      
+      - name: Build
+        run: pnpm run build
+      
+      - name: Test
+        run: pnpm run test --watch=false
+
