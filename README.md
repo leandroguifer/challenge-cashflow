@@ -93,7 +93,7 @@ O front-end faz o mesmo pelo navegador em <http://localhost:24200>.
 
 ## Testes
 
-São 39 testes, cada um com `Trait("Requirement", ...)` e o requisito no nome de exibição.
+São 39 métodos de teste, que somam 43 casos executados, porque quatro testes de arquitetura rodam uma vez para cada serviço. Cada um com `Trait("Requirement", ...)` e o requisito no nome de exibição.
 
 | Projeto | Teste | Requisito |
 | --- | --- | --- |
@@ -137,7 +137,7 @@ São 39 testes, cada um com `Trait("Requirement", ...)` e o requisito no nome de
 | Integration.Tests | `EntryAndOutboxMessageAreStoredTogether` | RNF05 |
 | Integration.Tests | `OutboxFailureLeavesNoEntry` | RNF05 |
 
-Os testes de arquitetura marcados como "Arquitetura" não correspondem a um RF ou RNF do documento. O RNF04 (disponibilidade) é de monitoramento e não tem teste. O workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) roda build, unidade, arquitetura e integração em todo pull request.
+Os testes de arquitetura marcados como "Arquitetura" não correspondem a um RF ou RNF do documento. O RNF04 (disponibilidade) é de monitoramento e não tem teste. O workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) roda build, unidade, arquitetura e integração em todo pull request, exceto para os que tem mudança somente em documentação.
 
 Comandos:
 
@@ -174,7 +174,7 @@ Os três thresholds passaram, então o RNF02 foi atendido nesta rodada. O máxim
 - **Outbox e RabbitMQ:** o lançamento e o evento são gravados na mesma transação. Um serviço em segundo plano publica os eventos pendentes com confirmação do broker. Se o RabbitMQ cair, os eventos esperam no outbox (ADR 003).
 - **Consistência eventual:** o saldo é atualizado de forma assíncrona. O consumidor ignora eventos já processados e envia mensagens inválidas para a fila `balance.entry-posted.dlq`.
 - **Isolamento por loja:** RLS no PostgreSQL com `FORCE ROW LEVEL SECURITY`. O usuário da aplicação não é dono das tabelas, e sem a loja informada nenhuma linha é devolvida. Lançamentos são imutáveis também no banco: o papel da aplicação não tem `UPDATE` nem `DELETE` em `entries`.
-- **Papéis:** só o caixa abre, fecha e lança. Caixa, auxiliar e proprietário consultam os lançamentos. Auxiliar e proprietário consultam o saldo. A validação do proprietário citada no RF11 não está implementada.
+- **Papéis:** só o caixa abre, fecha e lança. Caixa, auxiliar e proprietário consultam os lançamentos. Auxiliar e proprietário consultam o saldo.
 - **Mensageria com permissão mínima:** o usuário do *Lançamentos* só publica no exchange e o do *Consolidado* só consome a fila, definidos em `docker/rabbitmq/definitions.json`.
 - **Dia comercial:** o fuso padrão é `America/Sao_Paulo`, configurável em `Business:TimeZone`.
 - **Demonstração:** o `.env.example` define `ASPNETCORE_ENVIRONMENT=Development` para expor o Scalar e o OpenAPI. O Keycloak roda em `start-dev`, o Aspire Dashboard sem autenticação e tudo em HTTP. Nada disso serve para produção.
