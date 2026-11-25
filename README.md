@@ -93,7 +93,7 @@ O front-end faz o mesmo pelo navegador em <http://localhost:24200>.
 
 ## Testes
 
-São 39 testes, cada um com `Trait("Requirement", ...)` e o requisito no nome de exibição.
+São 39 métodos de teste, que somam 43 casos executados, porque quatro testes de arquitetura rodam uma vez para cada serviço. Cada um com `Trait("Requirement", ...)` e o requisito no nome de exibição.
 
 | Projeto | Teste | Requisito |
 | --- | --- | --- |
@@ -137,7 +137,7 @@ São 39 testes, cada um com `Trait("Requirement", ...)` e o requisito no nome de
 | Integration.Tests | `EntryAndOutboxMessageAreStoredTogether` | RNF05 |
 | Integration.Tests | `OutboxFailureLeavesNoEntry` | RNF05 |
 
-Os testes de arquitetura marcados como "Arquitetura" não correspondem a um RF ou RNF do documento. O RNF04 (disponibilidade) é de monitoramento e não tem teste. O workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) roda build, unidade, arquitetura e integração em todo pull request.
+Os testes de arquitetura marcados como "Arquitetura" não correspondem a um RF ou RNF do documento. O RNF04 (disponibilidade) é de monitoramento e não têm teste. O workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) roda build, unidade, arquitetura e integração em todo pull request, exceto para os que tem mudança somente em documentação.
 
 Comandos:
 
@@ -152,7 +152,7 @@ Os de integração sobem PostgreSQL e RabbitMQ com Testcontainers e exigem Docke
 
 ### Carga (RNF02)
 
-`tests/load/run.sh` roda o k6 em Docker na rede do compose (a stack precisa estar de pé). Ele popula o banco do *Consolidado* com saldos de 3 lojas por 401 dias, pede o token do `proprietario` ao Keycloak e faz `GET /api/v1/daily-balances` de 30 dias a 50 req/s constantes por 5 minutos. Os thresholds são `http_req_failed` abaixo de 5%, `p(99)` abaixo de 500 ms e `dropped_iterations` igual a zero. O resumo é salvo em `tests/load/results/`.
+`tests/load/run.sh` roda o k6 em Docker na rede do compose (a stack precisa estar de pé). Ele popula o banco do *Consolidado* com saldos de 3 lojas por 401 dias, pede o token do `proprietario` ao Keycloak e faz `GET /api/v1/daily-balances` de 30 dias a 50 req/s constantes por 5 minutos. O teste só passa se houver menos de 5% de falhas, se 99% das respostas levarem menos de 500 ms e se nenhuma requisição for perdida por falta de capacidade. O resumo é salvo em `tests/load/results/`.
 
 Resultado da última rodada, medido na máquina de desenvolvimento com serviços e bancos em Docker no mesmo host (`tests/load/results/balance-20261119T213138Z.txt` e `.json`). Não representa produção.
 
@@ -160,21 +160,21 @@ Resultado da última rodada, medido na máquina de desenvolvimento com serviços
 | --- | --- |
 | Requisições a 50 req/s por 5 minutos | 15.001 |
 | Falhas | 0 de 15.153 requisições HTTP (0,00%), incluindo token e verificação inicial |
-| Iterações perdidas | 0 |
+| Requisições perdidas por falta de capacidade | 0 |
 | Média | 1,91 ms |
 | Mediana | 1,78 ms |
-| p95 | 2,51 ms |
-| p99 | 3,08 ms |
+| 95% das respostas levaram até | 2,51 ms |
+| 99% das respostas levaram até | 3,08 ms |
 | Máximo | 897,59 ms |
 
-Os três thresholds passaram, então o RNF02 foi atendido nesta rodada. O máximo foi de 897,59 ms, muito acima do p99. Quantas requisições passaram de 500 ms não foi medido e a causa não foi investigada. Na rodada anterior, já removida do repositório, o máximo foi de 807,97 ms.
+Os três critérios foram atendidos, então o RNF02 foi cumprido nesta rodada. A resposta mais lenta levou 897,59 ms, muito acima dos 3,08 ms que cobrem 99% das respostas. Quantas requisições passaram de 500 ms não foi medido e a causa não foi investigada. Na rodada anterior, já removida do repositório, a resposta mais lenta foi de 807,97 ms.
 
 ## Decisões e limites
 
 - **Outbox e RabbitMQ:** o lançamento e o evento são gravados na mesma transação. Um serviço em segundo plano publica os eventos pendentes com confirmação do broker. Se o RabbitMQ cair, os eventos esperam no outbox (ADR 003).
 - **Consistência eventual:** o saldo é atualizado de forma assíncrona. O consumidor ignora eventos já processados e envia mensagens inválidas para a fila `balance.entry-posted.dlq`.
 - **Isolamento por loja:** RLS no PostgreSQL com `FORCE ROW LEVEL SECURITY`. O usuário da aplicação não é dono das tabelas, e sem a loja informada nenhuma linha é devolvida. Lançamentos são imutáveis também no banco: o papel da aplicação não tem `UPDATE` nem `DELETE` em `entries`.
-- **Papéis:** só o caixa abre, fecha e lança. Caixa, auxiliar e proprietário consultam os lançamentos. Auxiliar e proprietário consultam o saldo. A validação do proprietário citada no RF11 não está implementada.
+- **Papéis:** só o caixa abre, fecha e lança. Caixa, auxiliar e proprietário consultam os lançamentos. Auxiliar e proprietário consultam o saldo.
 - **Mensageria com permissão mínima:** o usuário do *Lançamentos* só publica no exchange e o do *Consolidado* só consome a fila, definidos em `docker/rabbitmq/definitions.json`.
 - **Dia comercial:** o fuso padrão é `America/Sao_Paulo`, configurável em `Business:TimeZone`.
 - **Demonstração:** o `.env.example` define `ASPNETCORE_ENVIRONMENT=Development` para expor o Scalar e o OpenAPI. O Keycloak roda em `start-dev`, o Aspire Dashboard sem autenticação e tudo em HTTP. Nada disso serve para produção.

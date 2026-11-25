@@ -1,33 +1,35 @@
 # Arquitetura do Sistema
 
-* **Data:** 18/11/2026
+
 * **Autores:** Leandro Fernandes
 
 Este documento é o guia de referência da arquitetura do sistema de **Fluxo de Caixa**, tomando como exemplo o caso da **Fernandes Mecânica**. Nele detalhamos o contexto de negócio e os demais pontos que envolvem o projeto.
 
 ## Índice
 
-1. [Visão geral](#1)
-   - 1.1 [Escopo](#1_1)
-2. [Contexto](#2)
-   - 2.1 [Atores](#2_1)
-   - 2.2 [Domínios](#2_2)
-   - 2.3 [Considerações](#2_3)
-3. [Requisitos](#3)
-   - 3.1 [Requisitos funcionais](#3_1)
-   - 3.2 [Requisitos não funcionais](#3_2)
-4. [Arquitetura alvo](#4)
-   - 4.1 [Contexto](#4_1)
-   - 4.2 [Contêineres](#4_2)
-   - 4.3 [Fluxo de um lançamento](#4_3)
-   - 4.4 [Como a arquitetura atende os requisitos](#4_4)
-5. [Decisões](#5)
-6. [Segurança](#6)
-7. [Qualidade e observabilidade](#7)
-8. [Riscos e impactos](#8)
-9. [Custos](#9)
-10. [Transição](#10)
-11. [Evoluções futuras](#11)
+- [Arquitetura do Sistema](#arquitetura-do-sistema)
+  - [Índice](#índice)
+  - [1. Visão geral](#1-visão-geral)
+    - [1.1 Escopo](#11-escopo)
+  - [2. Contexto](#2-contexto)
+    - [2.1 Atores](#21-atores)
+    - [2.2 Domínios](#22-domínios)
+    - [2.3 Considerações](#23-considerações)
+  - [3. Requisitos](#3-requisitos)
+    - [3.1 Requisitos funcionais](#31-requisitos-funcionais)
+    - [3.2 Requisitos não funcionais](#32-requisitos-não-funcionais)
+  - [4. Arquitetura alvo](#4-arquitetura-alvo)
+    - [4.1 Contexto](#41-contexto)
+    - [4.2 Contêineres](#42-contêineres)
+    - [4.3 Fluxo de um lançamento](#43-fluxo-de-um-lançamento)
+    - [4.4 Como a arquitetura atende os requisitos](#44-como-a-arquitetura-atende-os-requisitos)
+  - [5. Decisões](#5-decisões)
+  - [6. Segurança](#6-segurança)
+  - [7. Qualidade e observabilidade](#7-qualidade-e-observabilidade)
+  - [8. Riscos e impactos](#8-riscos-e-impactos)
+  - [9. Custos](#9-custos)
+  - [10. Transição](#10-transição)
+  - [11. Evoluções futuras](#11-evoluções-futuras)
 
 <a id="1"></a>
 ## 1. Visão geral
@@ -97,7 +99,7 @@ A solução é dividida em dois serviços independentes. O serviço de *Lançame
 | RF08 | *Consolidado* | Disponibilizar o relatório do dia, com lançamentos e saldo, por loja e para a empresa. |
 | RF09 | Transversal | Autenticar o usuário e identificar seu papel e sua loja. |
 | RF10 | Transversal | Restringir o acesso por loja: caixa e auxiliar veem só a própria, o proprietário vê todas. |
-| RF11 | Transversal | Restringir as ações por papel: só o caixa lança, abre e fecha; só o proprietário valida; o auxiliar só consulta. |
+| RF11 | Transversal | Restringir as ações por papel: só o caixa lança, abre e fecha; o proprietário e o auxiliar só consultam. |
 
 <a id="3_2"></a>
 ### 3.2 Requisitos não funcionais
@@ -105,7 +107,7 @@ A solução é dividida em dois serviços independentes. O serviço de *Lançame
 | Código | Requisito | Meta | Como verificar |
 | --- | --- | --- | --- |
 | RNF01 | Isolamento de falha | Com o *Consolidado* parado, o *Lançamentos* aceita 100% dos lançamentos válidos. | Derrubar o *Consolidado*, enviar lançamentos e conferir que nenhum falhou. |
-| RNF02 | Desempenho do *Consolidado* | 50 req/s durante 5 minutos, com no máximo 5% de falha e resposta em até 500 ms. | Teste de carga. |
+| RNF02 | Desempenho do *Consolidado* | 50 req/s durante 5 minutos, com no máximo 5% de falha e 99% das respostas em até 500 ms. | Teste de carga. |
 | RNF03 | Atraso do saldo | Até 5 segundos depois do lançamento. Depois de uma parada, até 5 minutos após o retorno. | Medir o tempo entre o lançamento e o saldo atualizado. |
 | RNF04 | Disponibilidade | *Lançamentos* 99,5%. *Consolidado* 99%. | Monitoramento de disponibilidade. |
 | RNF05 | Durabilidade e sem duplicidade | Nenhum lançamento aceito se perde. Um evento repetido não altera o saldo duas vezes. | Teste de integração. |
@@ -212,7 +214,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 
 * **Autenticação e autorização:** toda chamada exige token do Keycloak (OIDC). A API confere assinatura, validade e audiência. O papel define a ação (RF11) e o grupo define a loja (RF10).
 * **Isolamento dos dados:** RLS por loja no banco. Sem a loja informada, nenhuma linha é devolvida (ADR 005).
-* **Transporte e segredos:** HTTPS nas APIs. Segredos fora do repositório, com apenas um `.env.example` de valores fictícios.
+* **Transporte e segredos:** O ambiente local usa HTTP; em produção as APIs devem usar HTTPS. Segredos fora do repositório, com apenas um `.env.example` de valores fictícios.
 * **Mensageria:** cada serviço tem seu usuário no RabbitMQ, com permissão mínima: o *Lançamentos* só publica e o *Consolidado* só consome.
 
 
@@ -220,7 +222,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 ## 7. Qualidade e observabilidade
 
 * **Testes:** unitários (regra do saldo diário e evento repetido), de integração com PostgreSQL e RabbitMQ em contêineres, de arquitetura (xUnit), de isolamento do RLS, de resiliência (derrubar o *Consolidado*, RNF01) e de carga (50 req/s por 5 minutos, RNF02).
-* **Execução:** os testes unitários, de arquitetura, de isolamento e de integração rodam a cada pull request em GitHub Actions. Os testes de resiliência e de carga rodam sob demanda.
+* **Execução:** os testes unitários, de arquitetura e de integração (incluindo isolamento e resiliência) rodam no GitHub Actions em pull requests que alteram código. O teste de carga é executado manualmente.
 * **Observabilidade:** as APIs são instrumentadas com OpenTelemetry (métricas, traces e logs). Na demonstração, os dados vão para o Aspire Dashboard, que sobe junto no `docker compose`. Em produção, a proposta é Prometheus e Grafana, com alerta quando a fila acumula por mais de 1 minuto. Um trace acompanha o lançamento até o saldo atualizado.
 
 
@@ -231,7 +233,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 | --- | --- |
 | RabbitMQ fora do ar | O outbox guarda os eventos e reenvia quando ele volta |
 | Evento repetido | O *Consolidado* registra os eventos já processados (RNF05) |
-| Mensagem com erro repetida | Fila de erros e alerta |
+| Mensagem com erro repetida | Fila de erros. Em produção, a proposta é ter um alerta |
 | Pico acima de 50 req/s | Saldo já calculado e várias instâncias |
 | Keycloak fora do ar | Tokens de curta duração. Sessões ativas continuam |
 | Lançamento errado, sem edição | Fora do escopo. Evolução: lançamento de ajuste |
@@ -239,7 +241,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 <a id="9"></a>
 ## 9. Custos
 
-- **Premissas:** 3 lojas, cerca de 1.000 lançamentos por dia (a validar no teste de carga, RNF02).
+- **Premissas:** 3 lojas e cerca de 1.000 lançamentos por dia (estimativa ainda não validada; o teste de carga mede só a consulta do saldo).
 - **Licenças:** sem custo (tudo open source).
 - **Infraestrutura:** VPS Hostinger, plano de 24 meses.
 

@@ -1,6 +1,6 @@
 # ADR 005: Acesso por empresa e loja com Keycloak e RLS no PostgreSQL
 
-* **Data:** 18/11/2026
+
 * **Status:** Aceito
 * **Autores:** Leandro Fernandes
 
