@@ -137,7 +137,7 @@ São 39 métodos de teste, que somam 43 casos executados, porque quatro testes d
 | Integration.Tests | `EntryAndOutboxMessageAreStoredTogether` | RNF05 |
 | Integration.Tests | `OutboxFailureLeavesNoEntry` | RNF05 |
 
-Os testes de arquitetura marcados como "Arquitetura" não correspondem a um RF ou RNF do documento. O RNF04 (disponibilidade) é de monitoramento e não têm teste. O workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) roda build, unidade, arquitetura e integração em todo pull request, exceto para os que tem mudança somente em documentação.
+Os testes de arquitetura marcados como "Arquitetura" não correspondem a um RF ou RNF do documento. O RNF04 (disponibilidade) é de monitoramento e não tem teste. O workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) roda build, unidade, arquitetura e integração do .NET, além do build e dos testes do frontend. Ele roda em pull requests, exceto nos que alteram somente documentação (`docs/` e arquivos `.md`), `tests/load/` ou `.gitignore`, e também pode ser disparado manualmente. Uma mudança só no frontend também executa os jobs .NET.
 
 Comandos:
 
