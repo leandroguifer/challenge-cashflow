@@ -39,7 +39,7 @@ export const options = {
 };
 
 let token = null;
-let tokenIssuedAt = 0;
+let renewAt = 0;
 
 function requestToken() {
   const response = http.post(
@@ -60,10 +60,19 @@ function requestToken() {
   return response.json('access_token');
 }
 
-function currentToken() {
-  if (token === null || Date.now() - tokenIssuedAt > config.tokenMaxAgeMs) {
+function randomTokenAge() {
+  return config.tokenMaxAgeMs * (0.5 + Math.random());
+}
+
+function currentToken(shared) {
+  if (token === null) {
+    token = shared.token;
+    renewAt = shared.issuedAt + randomTokenAge();
+  }
+
+  if (Date.now() > renewAt) {
     token = requestToken();
-    tokenIssuedAt = Date.now();
+    renewAt = Date.now() + randomTokenAge();
   }
 
   return token;
@@ -81,8 +90,10 @@ function dailyBalancesUrl() {
 }
 
 export function setup() {
+  const issuedAt = Date.now();
+  const sharedToken = requestToken();
   const response = http.get(dailyBalancesUrl(), {
-    headers: { Authorization: `Bearer ${requestToken()}` },
+    headers: { Authorization: `Bearer ${sharedToken}` },
     tags: { endpoint: 'setup' },
   });
 
@@ -90,12 +101,12 @@ export function setup() {
     fail(`Setup request failed with status ${response.status}: ${response.body}`);
   }
 
-  return { rows: response.json().length };
+  return { token: sharedToken, issuedAt };
 }
 
-export default function () {
+export default function (shared) {
   const response = http.get(dailyBalancesUrl(), {
-    headers: { Authorization: `Bearer ${currentToken()}` },
+    headers: { Authorization: `Bearer ${currentToken(shared)}` },
     tags: { endpoint: 'daily_balances' },
   });
 

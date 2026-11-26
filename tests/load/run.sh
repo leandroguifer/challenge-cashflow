@@ -34,6 +34,7 @@ fi
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 SUMMARY_JSON="balance-$STAMP.json"
 SUMMARY_TEXT="balance-$STAMP.txt"
+SAMPLES_CSV="balance-$STAMP.csv"
 
 echo "Running k6 ($K6_IMAGE) on network $COMPOSE_NETWORK"
 
@@ -54,9 +55,14 @@ MSYS_NO_PATHCONV=1 docker run --rm \
   "$K6_IMAGE" run \
   --quiet \
   --summary-export "/work/results/$SUMMARY_JSON" \
+  --out "csv=/work/results/$SAMPLES_CSV" \
   /work/balance.js 2>&1 | tee "$RESULTS_DIR/$SUMMARY_TEXT"
 STATUS=${PIPESTATUS[0]}
 set -e
+
+if [ -f "$RESULTS_DIR/$SUMMARY_JSON" ]; then
+  sed -i -E 's/("token": *)"[^"]*"/\1"removido"/' "$RESULTS_DIR/$SUMMARY_JSON"
+fi
 
 echo "Summary saved to tests/load/results/$SUMMARY_JSON and tests/load/results/$SUMMARY_TEXT"
 

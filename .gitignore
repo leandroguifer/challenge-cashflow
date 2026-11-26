@@ -27,3 +27,6 @@ dist/
 .angular/
 
 .temp/
+
+# Medições detalhadas do teste de carga
+tests/load/results/*.csv

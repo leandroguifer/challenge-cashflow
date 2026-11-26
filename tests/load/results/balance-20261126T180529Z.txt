@@ -1,0 +1,44 @@
+
+
+  █ THRESHOLDS 
+
+    dropped_iterations
+    ✗ 'count==0' count=21
+
+    http_req_duration{endpoint:daily_balances}
+    ✓ 'p(99)<500' p(99)=10.29ms
+
+    http_req_failed
+    ✓ 'rate<0.05' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 29958   99.167658/s
+    checks_succeeded...: 100.00% 29958 out of 29958
+    checks_failed......: 0.00%   0 out of 29958
+
+    ✓ status is 200
+    ✓ returns a JSON array
+
+    HTTP
+    http_req_duration...............: avg=9.78ms  min=1.24ms med=2ms    max=1.27s p(90)=3.18ms p(95)=3.79ms p(99)=54.27ms
+      { endpoint:daily_balances }...: avg=6.7ms   min=1.24ms med=1.99ms max=1.25s p(90)=3.11ms p(95)=3.59ms p(99)=10.29ms
+      { expected_response:true }....: avg=9.78ms  min=1.24ms med=2ms    max=1.27s p(90)=3.18ms p(95)=3.79ms p(99)=54.27ms
+    http_req_failed.................: 0.00%  0 out of 15152
+    http_reqs.......................: 15152  50.156498/s
+
+    EXECUTION
+    dropped_iterations..............: 21     0.069515/s
+    iteration_duration..............: avg=10.41ms min=1.57ms med=2.49ms max=1.29s p(90)=3.92ms p(95)=4.58ms p(99)=54.78ms
+    iterations......................: 14979  49.583829/s
+    vus.............................: 0      min=0          max=59
+    vus_max.........................: 71     min=50         max=71
+
+    NETWORK
+    data_received...................: 181 MB 598 kB/s
+    data_sent.......................: 23 MB  78 kB/s
+
+
+
+time="2026-11-26T18:10:32Z" level=error msg="thresholds on metrics 'dropped_iterations' have been crossed"
