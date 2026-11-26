@@ -234,7 +234,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 | --- | --- |
 | RabbitMQ fora do ar | O outbox guarda os eventos e reenvia quando ele volta |
 | Evento repetido | O *Consolidado* registra os eventos já processados (RNF05) |
-| Mensagem com falha repetida | Hoje, só a mensagem inválida ou rejeitada vai para a fila de erros; numa falha inesperada, ela volta para a fila sem limite. Evolução: limite de tentativas. Em produção, a proposta é ter um alerta para a fila de erros |
+| Mensagem com falha repetida | Depois de 5 tentativas, vai para a fila de erros. Falha temporária do banco não conta. A contagem fica na memória do *Consolidado*, e não há rotina de reprocessamento. Evolução: reprocessar a fila de erros. Em produção, a proposta é ter um alerta para a fila de erros |
 | Pico acima de 50 req/s | Saldo já calculado e várias instâncias |
 | Keycloak fora do ar | Tokens de curta duração. Sessões ativas continuam |
 | Lançamento errado, sem edição | Fora do escopo. Evolução: lançamento de ajuste |
@@ -285,3 +285,4 @@ Hoje o caixa é controlado em planilhas. A migração é gradual:
 * Alta disponibilidade dos bancos, do RabbitMQ e das aplicações
 * Reconciliação do saldo com os lançamentos, e reconstrução em caso de diferença
 * Atender mais de uma empresa, com isolamento por empresa no banco
+* Reprocessamento das mensagens da fila de erros

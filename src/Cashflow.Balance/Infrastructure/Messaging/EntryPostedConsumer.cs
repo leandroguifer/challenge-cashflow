@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using Cashflow.Balance.Application.Consumption;
 using Cashflow.Balance.Contracts;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Npgsql;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
@@ -20,8 +22,11 @@ internal sealed partial class EntryPostedConsumer(
 {
     private const string Queue = "balance.entry-posted";
     private const ushort PrefetchCount = 20;
+    private const int MaxAttempts = 5;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    private readonly ConcurrentDictionary<Guid, int> failedAttempts = new();
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -71,6 +76,8 @@ internal sealed partial class EntryPostedConsumer(
     {
         using var activity = MessagingTelemetry.StartConsumer("entries.entry-posted process", args.BasicProperties.Headers);
 
+        var eventId = Guid.Empty;
+
         try
         {
             var message = JsonSerializer.Deserialize<EntryPostedEvent>(args.Body.Span, JsonOptions);
@@ -81,12 +88,16 @@ internal sealed partial class EntryPostedConsumer(
                 return;
             }
 
+            eventId = message.EventId;
+
             await using var scope = scopeFactory.CreateAsyncScope();
             var dispatcher = scope.ServiceProvider.GetRequiredService<IDispatcher>();
 
             var result = await dispatcher.SendAsync(
                 new ApplyEntryPostedCommand(message.EventId, message.StoreId, message.BusinessDate, type, message.Amount),
                 cancellationToken);
+
+            failedAttempts.TryRemove(eventId, out _);
 
             if (result.IsSuccess)
             {
@@ -104,9 +115,31 @@ internal sealed partial class EntryPostedConsumer(
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             LogProcessingFailed(exception);
+
+            if (!IsTransient(exception) && failedAttempts.AddOrUpdate(eventId, 1, (_, attempts) => attempts + 1) >= MaxAttempts)
+            {
+                failedAttempts.TryRemove(eventId, out _);
+                LogAttemptsExhausted(eventId, MaxAttempts);
+                await channel.BasicNackAsync(args.DeliveryTag, false, false, cancellationToken);
+                return;
+            }
+
             await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             await channel.BasicNackAsync(args.DeliveryTag, false, true, cancellationToken);
         }
+    }
+
+    private static bool IsTransient(Exception exception)
+    {
+        for (var current = exception; current is not null; current = current.InnerException)
+        {
+            if (current is NpgsqlException { IsTransient: true })
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "RabbitMQ unavailable, retrying in 5 seconds")]
@@ -115,6 +148,9 @@ internal sealed partial class EntryPostedConsumer(
     [LoggerMessage(Level = LogLevel.Error, Message = "Message {EventId} rejected: {ErrorCode}")]
     private partial void LogMessageRejected(Guid eventId, string errorCode);
 
-    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to process message, it will be redelivered")]
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to process message")]
     private partial void LogProcessingFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Message {EventId} sent to the dead letter queue after {Attempts} attempts")]
+    private partial void LogAttemptsExhausted(Guid eventId, int attempts);
 }

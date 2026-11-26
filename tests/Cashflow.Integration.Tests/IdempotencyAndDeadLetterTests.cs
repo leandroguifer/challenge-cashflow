@@ -76,4 +76,57 @@ public sealed class IdempotencyAndDeadLetterTests(InfrastructureFixture infrastr
         Assert.Equal(3u, deadLetters);
         Assert.Equal(0, await Sql.ScalarAsync<int>(Databases.BalanceMigrations, "select count(*) from daily_balances"));
     }
+
+    [Fact(DisplayName = "RNF05: mensagem que falha de forma repetida vai para a fila de erros depois do limite de tentativas")]
+    [Trait("Requirement", "RNF05")]
+    public async Task RepeatedFailureGoesToTheDeadLetterQueue()
+    {
+        await StartBalanceAsync();
+
+        await Rabbit.PublishAsync(
+            TestCredentials.RabbitEntries,
+            TestCredentials.RoutingKey,
+            Utf8(Event(Guid.NewGuid(), Store, BusinessDay.Today(), "Credit", 100_000_000_000_000_000m)));
+
+        var deadLetters = await Eventually.ValueAsync(
+            () => Rabbit.CountAsync(TestCredentials.DeadLetterQueue),
+            count => count == 1,
+            TimeSpan.FromSeconds(30),
+            TimeSpan.FromMilliseconds(250));
+
+        Assert.Equal(1u, deadLetters);
+        Assert.Equal(0, await Sql.ScalarAsync<int>(Databases.BalanceMigrations, "select count(*) from daily_balances"));
+    }
+
+    [Fact(DisplayName = "RNF05: falha temporária no banco não conta para o limite e o evento é processado quando o banco volta")]
+    [Trait("Requirement", "RNF05")]
+    public async Task TemporaryFailureDoesNotCountTowardsTheLimit()
+    {
+        await StartBalanceAsync();
+
+        await Sql.ExecuteAsync(Databases.BalanceMigrations, $"alter database {Databases.Balance} connection limit 0");
+        await Sql.ExecuteAsync(
+            Databases.BalanceMigrations,
+            $"select pg_terminate_backend(pid) from pg_stat_activity where datname = '{Databases.Balance}' and pid <> pg_backend_pid()");
+
+        await Rabbit.PublishAsync(
+            TestCredentials.RabbitEntries,
+            TestCredentials.RoutingKey,
+            Utf8(Event(Guid.NewGuid(), Store, BusinessDay.Today(), "Credit", 10m)));
+
+        await Task.Delay(TimeSpan.FromSeconds(12), TestContext.Current.CancellationToken);
+
+        Assert.Equal(0u, await Rabbit.CountAsync(TestCredentials.DeadLetterQueue));
+
+        await Sql.ExecuteAsync(Databases.BalanceMigrations, $"alter database {Databases.Balance} connection limit -1");
+
+        var processed = await Eventually.ValueAsync(
+            () => Sql.ScalarAsync<int>(Databases.BalanceMigrations, "select count(*) from daily_balances"),
+            count => count == 1,
+            TimeSpan.FromSeconds(30),
+            TimeSpan.FromMilliseconds(250));
+
+        Assert.Equal(1, processed);
+        Assert.Equal(0u, await Rabbit.CountAsync(TestCredentials.DeadLetterQueue));
+    }
 }
