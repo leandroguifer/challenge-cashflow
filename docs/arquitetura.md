@@ -36,7 +36,7 @@ Este documento é o guia de referência da arquitetura do sistema de **Fluxo de 
 
 O comerciante precisa controlar seu fluxo de caixa diário, com lançamentos de débito e crédito, e consultar o saldo diário *Consolidado*.
 
-O **Sistema de Fluxo de Caixa** está sendo pensado para atender a **Fernandes Mecânica**, com o intuito de substituir o processo que hoje é feito em planilhas, de maneira descentralizada, por um modelo SaaS multi-tenant que fará a unificação das informações das lojas.
+O **Sistema de Fluxo de Caixa** está sendo pensado para atender a **Fernandes Mecânica**, com o intuito de substituir o processo que hoje é feito em planilhas, de maneira descentralizada, por um sistema único que fará a unificação das informações das lojas.
 
 A solução é dividida em dois serviços independentes. O serviço de *Lançamentos* registra cada débito e crédito e responde ao caixa na hora. A cada lançamento, ele avisa o outro serviço por meio de um evento. O serviço de *Consolidado* recebe esses eventos e mantém o saldo diário de cada loja já calculado, pronto para consulta. Se o *Consolidado* ficar fora do ar, os lançamentos continuam sendo aceitos e os eventos esperam na fila, e o saldo é atualizado quando o serviço voltar.
 
@@ -212,7 +212,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 <a id="6"></a>
 ## 6. Segurança
 
-* **Autenticação e autorização:** toda chamada exige token do Keycloak (OIDC). A API confere assinatura, validade e audiência. O papel define a ação (RF11) e o grupo define a loja (RF10).
+* **Autenticação e autorização:** toda chamada exige token do Keycloak (OIDC). A API confere assinatura, emissor, audiência e validade. O papel define a ação (RF11) e o grupo define a loja (RF10).
 * **Isolamento dos dados:** RLS por loja no banco. Sem a loja informada, nenhuma linha é devolvida (ADR 005).
 * **Transporte e segredos:** O ambiente local usa HTTP; em produção as APIs devem usar HTTPS. Segredos fora do repositório, com apenas um `.env.example` de valores fictícios.
 * **Mensageria:** cada serviço tem seu usuário no RabbitMQ, com permissão mínima: o *Lançamentos* só publica e o *Consolidado* só consome.
@@ -238,6 +238,8 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 | Keycloak fora do ar | Tokens de curta duração. Sessões ativas continuam |
 | Lançamento errado, sem edição | Fora do escopo. Evolução: lançamento de ajuste |
 | Saldo diferente dos lançamentos, sem rotina de reconciliação | Os lançamentos continuam gravados no *Lançamentos* e permitem conferir o saldo. Evolução: reconciliação e reconstrução do saldo |
+| Mais de uma empresa no mesmo sistema, sem separação entre elas | Hoje o sistema atende uma só empresa. Evolução: isolamento por empresa no banco |
+
 
 <a id="9"></a>
 ## 9. Custos
@@ -276,3 +278,4 @@ Hoje o caixa é controlado em planilhas. A migração é gradual:
 * No relatório, um seletor de data para escolher o dia dos lançamentos, entre os dias que têm registros
 * Bancos em servidores separados e alta disponibilidade
 * Reconciliação do saldo com os lançamentos, e reconstrução em caso de diferença
+* Atender mais de uma empresa, com isolamento por empresa no banco
