@@ -149,9 +149,9 @@ System_Boundary(sistema, "Sistema de fluxo de caixa") {
   Container(apiLanc, "API de *Lançamentos*", "C#, EF Core, Dapper", "Registra débitos e créditos, abre e fecha o caixa")
   Container(spa, "Front-end", "Angular, Taiga UI", "Tela de lançar e ver o saldo")
   Container(apiCons, "API de *Consolidado*", "C#, EF Core, Dapper", "Consome eventos e responde o saldo diário")
-  ContainerDb(dbLanc, "Banco de *Lançamentos*", "PostgreSQL", "Lançamentos e outbox")
-  ContainerQueue(fila, "Fila de eventos", "RabbitMQ", "Transporta os eventos de lançamento")
-  ContainerDb(dbCons, "Banco de *Consolidado*", "PostgreSQL", "Saldo diário e eventos já processados")
+  ContainerDb(dbLanc, "Banco de *Lançamentos*", "PostgreSQL, servidor próprio", "Lançamentos e outbox")
+  ContainerQueue(fila, "Fila de eventos", "RabbitMQ, servidor próprio", "Transporta os eventos de lançamento")
+  ContainerDb(dbCons, "Banco de *Consolidado*", "PostgreSQL, servidor próprio", "Saldo diário e eventos já processados")
 }
 Rel(usuario, spa, "Usa")
 Rel(spa, keycloak, "Login", "OIDC")
@@ -173,7 +173,7 @@ UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
 | API de *Consolidado* | Consome os eventos, ignora os repetidos, atualiza o saldo diário e responde às consultas e ao relatório. |
 | Banco de *Consolidado* | Guarda o saldo diário por loja e os eventos já processados. |
 
-Cada serviço tem o seu próprio banco, e os dois só se comunicam por eventos. Os dados são da empresa, e o acesso é limitado por papel e por loja (detalhes na seção 6).
+Cada serviço tem o seu próprio banco, em servidor próprio, o RabbitMQ fica em outro e os dois serviços só se comunicam por eventos. Os dados são da empresa, e o acesso é limitado por papel e por loja (detalhes na seção 6).
 
 <a id="4_3"></a>
 ### 4.3 Fluxo de um lançamento
@@ -189,7 +189,7 @@ Cada serviço tem o seu próprio banco, e os dois só se comunicam por eventos. 
 
 | Requisito | Como é atendido |
 | --- | --- |
-| RNF01 Isolamento de falha | O *Lançamentos* só grava no próprio banco. Se o *Consolidado* parar, os eventos esperam na fila. |
+| RNF01 Isolamento de falha | O *Lançamentos* só grava no próprio banco, que fica em servidor próprio. Se o *Consolidado* parar, os eventos esperam na fila. |
 | RNF02 Desempenho do *Consolidado* | O saldo já está calculado, e a leitura não soma lançamentos. A API de *Consolidado* pode rodar em várias instâncias. |
 | RNF03 Atraso do saldo | A atualização é assíncrona e contínua. Depois de uma parada, o consumidor esvazia a fila acumulada. |
 | RNF04 Disponibilidade | Serviços independentes: a queda de um não derruba o outro. |
@@ -241,6 +241,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 | Saldo diferente dos lançamentos, sem rotina de reconciliação | Os lançamentos continuam gravados no *Lançamentos* e permitem conferir o saldo. Evolução: reconciliação e reconstrução do saldo |
 | Mais de uma empresa no mesmo sistema, sem separação entre elas | Hoje o sistema atende uma só empresa. Evolução: isolamento por empresa no banco |
 | Fila ou outbox acumulando sem ninguém perceber | Hoje não há alerta nem métrica própria do outbox. Em produção, a proposta é alertar quando a fila acumula por mais de 1 minuto. Evolução: métrica do atraso no outbox |
+| Perda do disco do servidor do RabbitMQ | Eventos publicados e ainda não consumidos se perdem na fila. Eles continuam no outbox, marcados como publicados, mas hoje não há rotina de reenvio. Evolução: cluster com filas replicadas e rotina de reenvio |
 
 
 <a id="9"></a>
@@ -249,13 +250,16 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 - **Premissas:** 3 lojas e cerca de 1.000 lançamentos por dia (estimativa ainda não validada; o teste de carga mede só a consulta do saldo).
 - **Licenças:** sem custo (tudo open source).
 - **Infraestrutura:** VPS Hostinger, plano de 24 meses.
+- **Fora da estimativa:** domínio, cópias de segurança fora dos servidores, servidor de monitoramento, horas de implantação e operação, e margem para imprevistos.
 
-| Cenário | Servidores | 24 meses | Após renovação |
+| Cenário | Servidores | Por mês, no plano de 24 meses | Por mês, após a renovação |
 | --- | --- | --- | --- |
-| Produção inicial | 1 × KVM 4 (aplicações) <br/> 1 × KVM 2 (bancos e RabbitMQ) | R$ 102,98 | R$ 227,98 |
-| Alta disponibilidade | 2 × KVM 4 <br/> 3 × KVM 2 <br/> 1 × KVM 1 (balanceador Nginx) | R$ 278,94 | R$ 593,94 |
+| Produção inicial | 1 × KVM 4 (aplicações) <br/> 2 × KVM 2 (um para cada banco) <br/> 1 × KVM 1 (RabbitMQ) | R$ 175,96 | R$ 365,96 |
+| Alta disponibilidade | 2 × KVM 4 (aplicações) <br/> 4 × KVM 2 (principal e réplica de cada banco) <br/> 3 × KVM 1 (cluster RabbitMQ) <br/> 1 × KVM 1 (balanceador Nginx) | R$ 411,90 | R$ 851,90 |
 
-Fonte: [https://www.hostinger.com/br/precos/vps-hosting#plan-selector](https://www.hostinger.com/br/precos/vps-hosting#plan-selector), consultada em 18/11/2026.
+Valores promocionais, com pagamento do período completo na contratação, à vista ou parcelado. O tamanho dos servidores não foi validado em teste.
+
+Fonte: [https://www.hostinger.com/br/precos/vps-hosting#plan-selector](https://www.hostinger.com/br/precos/vps-hosting#plan-selector), consultada em 26/11/2026.
 
 <a id="10"></a>
 ## 10. Transição
@@ -278,6 +282,6 @@ Hoje o caixa é controlado em planilhas. A migração é gradual:
 * Cache nas consultas do *Consolidado*
 * Atualização em tempo real da tela de saldo
 * No relatório, um seletor de data para escolher o dia dos lançamentos, entre os dias que têm registros
-* Bancos em servidores separados e alta disponibilidade
+* Alta disponibilidade dos bancos, do RabbitMQ e das aplicações
 * Reconciliação do saldo com os lançamentos, e reconstrução em caso de diferença
 * Atender mais de uma empresa, com isolamento por empresa no banco
