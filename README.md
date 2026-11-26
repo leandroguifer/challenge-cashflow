@@ -94,7 +94,7 @@ O front-end faz o mesmo pelo navegador em <http://localhost:24200>.
 
 ## Testes
 
-São 41 métodos de teste, que somam 45 casos executados, porque quatro testes de arquitetura rodam uma vez para cada serviço. Cada um com `Trait("Requirement", ...)` e o requisito no nome de exibição.
+São 42 métodos de teste, que somam 46 casos executados, porque quatro testes de arquitetura rodam uma vez para cada serviço. Cada um com `Trait("Requirement", ...)` e o requisito no nome de exibição.
 
 | Projeto | Teste | Requisito |
 | --- | --- | --- |
@@ -139,6 +139,7 @@ São 41 métodos de teste, que somam 45 casos executados, porque quatro testes d
 | Integration.Tests | `TemporaryFailureDoesNotCountTowardsTheLimit` | RNF05 |
 | Integration.Tests | `EntryAndOutboxMessageAreStoredTogether` | RNF05 |
 | Integration.Tests | `OutboxFailureLeavesNoEntry` | RNF05 |
+| Integration.Tests | `ConcurrentEntriesDoNotExhaustDatabaseConnections` | RNF01 |
 
 Os testes de arquitetura marcados como "Arquitetura" não correspondem a um RF ou RNF do documento. O RNF04 (disponibilidade) é de monitoramento e não tem teste. O workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) roda build, unidade, arquitetura e integração do .NET, além do build e dos testes do frontend. Ele roda em pull requests, exceto nos que alteram somente documentação (`docs/` e arquivos `.md`), `tests/load/` ou `.gitignore`, e também pode ser disparado manualmente. Uma mudança só no frontend também executa os jobs .NET.
 
