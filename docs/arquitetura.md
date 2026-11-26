@@ -242,6 +242,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 | Mais de uma empresa no mesmo sistema, sem separação entre elas | Hoje o sistema atende uma só empresa. Evolução: isolamento por empresa no banco |
 | Fila ou outbox acumulando sem ninguém perceber | Hoje não há alerta nem métrica própria do outbox. Em produção, a proposta é alertar quando a fila acumula por mais de 1 minuto. Evolução: métrica do atraso no outbox |
 | Perda do disco do servidor do RabbitMQ | Eventos publicados e ainda não consumidos se perdem na fila. Eles continuam no outbox, marcados como publicados, mas hoje não há rotina de reenvio. Evolução: cluster com filas replicadas e rotina de reenvio |
+| Conexões do banco esgotadas com muitos pedidos simultâneos | Cada conexão tem limite no pool, definido no .env.example. Toda conexão nova, instância a mais ou ambiente novo precisa ter o limite revisto, porque a soma deve ficar abaixo do máximo do PostgreSQL |
 
 
 <a id="9"></a>
