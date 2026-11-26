@@ -12,6 +12,8 @@ export interface DailyBalance {
   readonly entryCount: number;
 }
 
+export type CompanyDailyBalance = Omit<DailyBalance, 'storeId'>;
+
 interface DailyBalanceDto {
   readonly storeId: string;
   readonly businessDate: string;
@@ -38,6 +40,25 @@ export class BalanceApiService {
 
     return items.map((dto) => ({
       storeId: dto.storeId,
+      businessDate: dto.businessDate,
+      credits: dto.totalCredits,
+      debits: dto.totalDebits,
+      balance: dto.balance,
+      entryCount: dto.entryCount,
+    }));
+  }
+
+  async listCompany(startDate: string, endDate: string): Promise<readonly CompanyDailyBalance[]> {
+    const params = new HttpParams().set('startDate', startDate).set('endDate', endDate);
+
+    const items = await firstValueFrom(
+      this.http.get<readonly Omit<DailyBalanceDto, 'storeId'>[]>(
+        `${this.config.config.balanceApiUrl}/api/v1/company/daily-balances`,
+        { params },
+      ),
+    );
+
+    return items.map((dto) => ({
       businessDate: dto.businessDate,
       credits: dto.totalCredits,
       debits: dto.totalDebits,

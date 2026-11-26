@@ -63,3 +63,18 @@
     </table>
   }
 }
+
+<h2>Lançamentos de {{ entriesDay() }}</h2>
+
+@if (entries.error()) {
+  <tui-block-status>
+    <h2>Não foi possível carregar os lançamentos</h2>
+    <button tuiButton size="m" (click)="entries.reload()">Tentar novamente</button>
+  </tui-block-status>
+} @else if (entries.isLoading()) {
+  <p class="muted">Carregando…</p>
+} @else if (!entries.value()?.length) {
+  <p class="muted">Nenhum lançamento neste dia.</p>
+} @else {
+  <app-entries-table [rows]="entries.value() ?? []" [showStore]="showStore()" />
+}

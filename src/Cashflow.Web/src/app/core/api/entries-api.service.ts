@@ -71,6 +71,13 @@ export class EntriesApiService {
     this.state.update((current) => ({ ...current, [storeId]: toDay(dto) }));
   }
 
+  async list(storeId: string, date: string): Promise<readonly Entry[]> {
+    const items = await firstValueFrom(
+      this.http.get<readonly EntryDto[]>(`${this.url(storeId)}/entries`, { params: { date } }),
+    );
+    return items.map(toEntry);
+  }
+
   async openCash(storeId: string): Promise<void> {
     await firstValueFrom(this.http.post(`${this.url(storeId)}/cash-register/open`, null));
     await this.load(storeId);
