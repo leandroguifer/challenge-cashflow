@@ -94,7 +94,7 @@ O front-end faz o mesmo pelo navegador em <http://localhost:24200>.
 
 ## Testes
 
-São 39 métodos de teste, que somam 43 casos executados, porque quatro testes de arquitetura rodam uma vez para cada serviço. Cada um com `Trait("Requirement", ...)` e o requisito no nome de exibição.
+São 41 métodos de teste, que somam 45 casos executados, porque quatro testes de arquitetura rodam uma vez para cada serviço. Cada um com `Trait("Requirement", ...)` e o requisito no nome de exibição.
 
 | Projeto | Teste | Requisito |
 | --- | --- | --- |
@@ -135,6 +135,8 @@ São 39 métodos de teste, que somam 43 casos executados, porque quatro testes d
 | Integration.Tests | `PendingOutboxMessagesArePublished` | RNF05 |
 | Integration.Tests | `RepeatedEventDoesNotChangeTheBalance` | RNF05 |
 | Integration.Tests | `InvalidMessagesGoToTheDeadLetterQueue` | RNF05 |
+| Integration.Tests | `RepeatedFailureGoesToTheDeadLetterQueue` | RNF05 |
+| Integration.Tests | `TemporaryFailureDoesNotCountTowardsTheLimit` | RNF05 |
 | Integration.Tests | `EntryAndOutboxMessageAreStoredTogether` | RNF05 |
 | Integration.Tests | `OutboxFailureLeavesNoEntry` | RNF05 |
 
@@ -173,7 +175,7 @@ Os três critérios foram atendidos, então o RNF02 foi cumprido nesta rodada. A
 ## Decisões e limites
 
 - **Outbox e RabbitMQ:** o lançamento e o evento são gravados na mesma transação. Um serviço em segundo plano publica os eventos pendentes com confirmação do broker. Se o RabbitMQ cair, os eventos esperam no outbox (ADR 003).
-- **Consistência eventual:** o saldo é atualizado de forma assíncrona. O consumidor ignora eventos já processados e envia mensagens inválidas para a fila `balance.entry-posted.dlq`.
+- **Consistência eventual:** o saldo é atualizado de forma assíncrona. O consumidor ignora eventos já processados e envia para a fila `balance.entry-posted.dlq` as mensagens inválidas e as que falham 5 vezes. Falhas temporárias do banco não contam para esse limite.
 - **Isolamento por loja:** RLS no PostgreSQL com `FORCE ROW LEVEL SECURITY`. O usuário da aplicação não é dono das tabelas, e sem a loja informada nenhuma linha é devolvida. Lançamentos são imutáveis também no banco: o papel da aplicação não tem `UPDATE` nem `DELETE` em `entries`.
 - **Papéis:** só o caixa abre, fecha e lança. Caixa, auxiliar e proprietário consultam os lançamentos. Auxiliar e proprietário consultam o saldo.
 - **Mensageria com permissão mínima:** o usuário do *Lançamentos* só publica no exchange e o do *Consolidado* só consome a fila, definidos em `docker/rabbitmq/definitions.json`.
