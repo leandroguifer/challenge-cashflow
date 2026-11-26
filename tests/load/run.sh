@@ -28,7 +28,7 @@ cd "$ROOT"
 
 if [ "$SEED" = "true" ]; then
   echo "Seeding the balance database"
-  docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d balance < "$LOAD_DIR/seed-balance.sql"
+  docker compose exec -T postgres-balance psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d balance < "$LOAD_DIR/seed-balance.sql"
 fi
 
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"

@@ -11,7 +11,7 @@ A arquitetura, os requisitos e as decisões estão em [docs/arquitetura.md](docs
 | APIs | .NET 11, ASP.NET Core | Um serviço para cada domínio, com módulos próprios sobre um `Cashflow.Core` compartilhado |
 | Escrita | EF Core 10 | Gravação com transação nos dois serviços (ADR 004) |
 | Leitura | Dapper | SQL direto e visível nas consultas (ADR 004) |
-| Banco | PostgreSQL 17 | Um banco por serviço (ADR 001) e RLS por loja (ADR 005) |
+| Banco | PostgreSQL 17 | Um servidor de banco por serviço (ADR 001) e RLS por loja (ADR 005) |
 | Mensageria | RabbitMQ 4 | Os serviços só se falam por eventos, com outbox no *Lançamentos* (ADR 003) |
 | Identidade | Keycloak 26 | OIDC, papéis e lojas por grupo (ADR 005) |
 | Front-end | Angular 22, Taiga UI 5, keycloak-js | Telas de caixa, saldo e relatório, servidas por nginx |
@@ -38,7 +38,8 @@ Valores de portas e senhas vêm do `.env.example`.
 | Keycloak | <http://localhost:28080> |
 | RabbitMQ (gerenciamento) | <http://localhost:25673> |
 | Aspire Dashboard | <http://localhost:28888> |
-| PostgreSQL | localhost:25432 |
+| PostgreSQL de *Lançamentos* | localhost:25432 |
+| PostgreSQL de *Consolidado* | localhost:25433 |
 | RabbitMQ (AMQP) | localhost:25672 |
 
 Para parar: `docker compose down`. Para zerar também os bancos, a fila e o realm do Keycloak: `docker compose down -v`.
