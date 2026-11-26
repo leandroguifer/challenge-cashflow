@@ -9,7 +9,7 @@ A arquitetura, os requisitos e as decisões estão em [docs/arquitetura.md](docs
 | Componente | Tecnologia | Por quê |
 | --- | --- | --- |
 | APIs | .NET 11, ASP.NET Core | Um serviço para cada domínio, com módulos próprios sobre um `Cashflow.Core` compartilhado |
-| Escrita | EF Core 10 | Regras de negócio e transação no *Lançamentos* (ADR 004) |
+| Escrita | EF Core 10 | Gravação com transação nos dois serviços (ADR 004) |
 | Leitura | Dapper | SQL direto e visível nas consultas (ADR 004) |
 | Banco | PostgreSQL 17 | Um banco por serviço (ADR 001) e RLS por loja (ADR 005) |
 | Mensageria | RabbitMQ 4 | Os serviços só se falam por eventos, com outbox no *Lançamentos* (ADR 003) |
