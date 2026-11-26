@@ -179,4 +179,4 @@ Os três critérios foram atendidos, então o RNF02 foi cumprido nesta rodada. A
 - **Dia comercial:** o fuso padrão é `America/Sao_Paulo`, configurável em `Business:TimeZone`.
 - **Demonstração:** o `.env.example` define `ASPNETCORE_ENVIRONMENT=Development` para expor o Scalar e o OpenAPI. O Keycloak roda em `start-dev`, o Aspire Dashboard sem autenticação e tudo em HTTP. Nada disso serve para produção.
 - **CORS:** as origens permitidas vêm de `CORS_ORIGINS`, separadas por vírgula.
-- **Front-end:** usa `GET /cash-register/today` (que já devolve os lançamentos do dia) e `GET /daily-balances`. Ainda não usa `GET /entries` nem o saldo da empresa (`/company/daily-balances`); o total da empresa na tela de saldo é somado no cliente. O relatório mostra saldos diários por loja, não os lançamentos.
+- **Frontend:** a tela de caixa usa `GET /cash-register/today`. O relatório lista os lançamentos do último dia do período selecionado, com `GET /entries`. Com todas as lojas selecionadas, o total da empresa no relatório e na tela de saldo vem de `GET /company/daily-balances`. Os testes do frontend usam Vitest, e o do relatório cobre RF07 e RF08.

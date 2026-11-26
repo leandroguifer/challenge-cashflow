@@ -272,4 +272,5 @@ Hoje o caixa é controlado em planilhas. A migração é gradual:
 * CQRS completo com Event Sourcing
 * Cache nas consultas do *Consolidado*
 * Atualização em tempo real da tela de saldo
+* No relatório, um seletor de data para escolher o dia dos lançamentos, entre os dias que têm registros
 * Bancos em servidores separados e alta disponibilidade

@@ -23,14 +23,19 @@ export class Saldo {
 
   protected readonly balances = resource({
     params: () => this.storeContext.selected(),
-    loader: ({ params }) => {
+    loader: async ({ params }) => {
       const date = isoDate(new Date());
-      return this.api.list(date, date, params === ALL_STORES ? undefined : params);
+      const allStores = params === ALL_STORES;
+      const [items, company] = await Promise.all([
+        this.api.list(date, date, allStores ? undefined : params),
+        allStores ? this.api.listCompany(date, date) : null,
+      ]);
+      return { items, company };
     },
   });
 
   protected readonly cards = computed(() => {
-    const items = this.balances.value() ?? [];
+    const items = this.balances.value()?.items ?? [];
     return this.storeContext.visible().map((store) => {
       const item = items.find((entry) => entry.storeId === store.id);
       return {
@@ -43,6 +48,9 @@ export class Saldo {
     });
   });
 
-  protected readonly total = computed(() => this.cards().reduce((sum, card) => sum + card.balance, 0));
+  protected readonly total = computed(() => {
+    const company = this.balances.value()?.company;
+    return company ? (company[0]?.balance ?? 0) : (this.cards()[0]?.balance ?? 0);
+  });
   protected readonly showTotal = computed(() => this.auth.hasAnyRole(['proprietario']));
 }
