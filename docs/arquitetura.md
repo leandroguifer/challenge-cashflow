@@ -237,6 +237,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 | Pico acima de 50 req/s | Saldo já calculado e várias instâncias |
 | Keycloak fora do ar | Tokens de curta duração. Sessões ativas continuam |
 | Lançamento errado, sem edição | Fora do escopo. Evolução: lançamento de ajuste |
+| Saldo diferente dos lançamentos, sem rotina de reconciliação | Os lançamentos continuam gravados no *Lançamentos* e permitem conferir o saldo. Evolução: reconciliação e reconstrução do saldo |
 
 <a id="9"></a>
 ## 9. Custos
@@ -274,3 +275,4 @@ Hoje o caixa é controlado em planilhas. A migração é gradual:
 * Atualização em tempo real da tela de saldo
 * No relatório, um seletor de data para escolher o dia dos lançamentos, entre os dias que têm registros
 * Bancos em servidores separados e alta disponibilidade
+* Reconciliação do saldo com os lançamentos, e reconstrução em caso de diferença
