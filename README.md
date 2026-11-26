@@ -2,7 +2,7 @@
 
 Sistema de fluxo de caixa para uma empresa com três lojas, dividido em dois serviços independentes: *Lançamentos* (abre e fecha o caixa e registra débitos e créditos) e *Consolidado* (mantém o saldo diário por loja e responde às consultas).
 
-A arquitetura, os requisitos e as decisões estão em [docs/arquitetura.md](docs/arquitetura.md) e nos ADRs em [docs/adr/](docs/adr/).
+A arquitetura, os requisitos e as decisões estão em [docs/arquitetura.md](docs/arquitetura.md) e nos ADRs em [docs/adr/](docs/adr/). A ligação entre requisitos, código e testes está na [matriz de rastreabilidade](docs/rastreabilidade.md), e os registros de execução, em [evidências](docs/evidencias.md).
 
 ## Tecnologias
 
