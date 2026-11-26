@@ -171,7 +171,7 @@ Resultado da última rodada, medido na máquina de desenvolvimento com serviços
 | 99% das respostas levaram até | 3,79 ms |
 | Máximo | 186,46 ms |
 
-Os três critérios foram atendidos, então o RNF02 foi cumprido nesta rodada. Antes dela, no mesmo dia, duas rodadas foram reprovadas por requisições perdidas: 49, com um build na mesma máquina, e 21 (`balance-20261126T173944Z` e `balance-20261126T180529Z`). Os usuários virtuais renovavam o token quase ao mesmo tempo, e o roteiro passou a espalhar as renovações. Uma rodada sem essa mudança, com medições detalhadas e sem resumo salvo no repositório, também passou, por isso a causa das perdas não está confirmada.
+Os três critérios foram atendidos, então o RNF02 foi cumprido nesta rodada. Antes dela, no mesmo dia, duas rodadas foram reprovadas por requisições perdidas: 49, com um build na mesma máquina, e 21 (`balance-20261126T173944Z` e `balance-20261126T180529Z`). Os usuários virtuais renovavam o token quase ao mesmo tempo, e o roteiro passou a espalhar as renovações. Uma rodada sem essa mudança, com medições detalhadas e sem resumo salvo no repositório, também passou, por isso a causa das perdas não está confirmada. O resultado de 19/11, anterior à separação dos bancos, foi mantido como referência (`balance-20261119T213138Z`).
 
 ## Decisões e limites
 
