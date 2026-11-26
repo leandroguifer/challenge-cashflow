@@ -26,6 +26,11 @@ Este documento é o guia de referência da arquitetura do sistema de **Fluxo de 
   - [5. Decisões](#5-decisões)
   - [6. Segurança](#6-segurança)
   - [7. Qualidade e observabilidade](#7-qualidade-e-observabilidade)
+    - [7.1 Atributos de qualidade](#71-atributos-de-qualidade)
+      - [Escalabilidade](#escalabilidade)
+      - [Alta disponibilidade](#alta-disponibilidade)
+      - [Segurança](#segurança)
+      - [Observabilidade](#observabilidade)
   - [8. Riscos e impactos](#8-riscos-e-impactos)
   - [9. Custos](#9-custos)
   - [10. Transição](#10-transição)
@@ -190,9 +195,9 @@ Cada serviço tem o seu próprio banco, em servidor próprio, o RabbitMQ fica em
 | Requisito | Como é atendido |
 | --- | --- |
 | RNF01 Isolamento de falha | O *Lançamentos* só grava no próprio banco, que fica em servidor próprio. Se o *Consolidado* parar, os eventos esperam na fila. |
-| RNF02 Desempenho do *Consolidado* | O saldo já está calculado, e a leitura não soma lançamentos. A API de *Consolidado* pode rodar em várias instâncias. |
+| RNF02 Desempenho do *Consolidado* | O saldo já está calculado, e a leitura não soma lançamentos. Os limites para usar várias instâncias estão na seção 7.1. |
 | RNF03 Atraso do saldo | A atualização é assíncrona e contínua. Depois de uma parada, o consumidor esvazia a fila acumulada. |
-| RNF04 Disponibilidade | Serviços independentes: a queda de um não derruba o outro. |
+| RNF04 Disponibilidade | Serviços e bancos independentes: a queda de um não derruba o outro. Frontend e Keycloak são compartilhados (seção 7.1). |
 | RNF05 Durabilidade e sem duplicidade | O outbox garante que o evento nasce junto com o lançamento. O registro dos eventos já processados impede contar duas vezes. |
 
 
@@ -227,6 +232,42 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 * **Observabilidade:** as APIs são instrumentadas com OpenTelemetry (métricas, traces e logs). Na demonstração, os dados vão para o Aspire Dashboard, que sobe junto no `docker compose`. Em produção, a proposta é Prometheus e Grafana, com alerta quando a fila acumula por mais de 1 minuto. Um trace acompanha o lançamento até o saldo atualizado.
 
 
+<a id="7_1"></a>
+### 7.1 Atributos de qualidade
+
+#### Escalabilidade
+
+* **Hoje:** o saldo é calculado antes da consulta. Em um teste, duas instâncias do *Consolidado* dividiram o processamento de 96 eventos, e o saldo conferiu com os lançamentos.
+* **Limites:** não há balanceador, e a distribuição das consultas não foi testada, nem duas instâncias de *Lançamentos* ou a subida simultânea de instâncias com o banco vazio. Cada instância de *Lançamentos* pode usar até 50 conexões, e a do *Consolidado*, até 30. O PostgreSQL aceita 100, com algumas reservadas ao administrador: duas instâncias de *Lançamentos* podem ultrapassar o limite.
+* **Produção (proposta):** balanceador na frente das APIs, e limites de conexão revistos conforme a quantidade de instâncias.
+
+#### Alta disponibilidade
+
+* **Hoje:** cada serviço tem o próprio banco. Com o *Consolidado* ou o banco dele parado, o *Lançamentos* continua aceitando lançamentos. As filas são duráveis, o publicador do outbox tenta novamente e o consumidor se reconecta ao RabbitMQ.
+* **Limites:** há uma só instância de cada componente. Frontend e Keycloak são compartilhados. A API que sobe sem o banco encerra, e o `docker compose` não a reinicia. O `/health` das APIs não verifica as dependências. Não há cópia de segurança, e as metas de disponibilidade (RNF04) não são medidas.
+* **Produção (proposta):** réplicas dos bancos, cluster do RabbitMQ, mais de uma instância das aplicações e do Keycloak, reinício automático, verificação das dependências e cópia de segurança com restauração testada.
+
+#### Segurança
+
+| Tema | Demonstração | Produção (proposta) |
+| --- | --- | --- |
+| Transporte | HTTP | HTTPS em todas as chamadas |
+| Contêineres das APIs e do frontend | Executam como `root` | Usuário sem privilégios |
+| Limite de requisições | Não há | Limite nas APIs ou no balanceador |
+| Hosts e CORS | `AllowedHosts` aceita qualquer host. O CORS restringe a origem, mas não os métodos e cabeçalhos | Restringir hosts, métodos e cabeçalhos |
+| Frontend | nginx sem cabeçalhos de segurança, e informa a versão | Adicionar os cabeçalhos e ocultar a versão |
+| Keycloak | Modo de desenvolvimento, sem exigir HTTPS e sem proteção contra força bruta | Modo de produção, com HTTPS e proteção ativada |
+| Login | O frontend usa PKCE. O client também aceita login direto com usuário e senha, para os testes manuais | Desativar o login direto |
+| Banco | Usuários separados por função, com a mesma senha | Uma senha para cada usuário, em cofre de segredos |
+| Aspire Dashboard | Sem autenticação | Acesso autenticado |
+
+#### Observabilidade
+
+* **Hoje:** traces, métricas e logs com OpenTelemetry, no Aspire Dashboard. Um trace acompanha o lançamento pelo RabbitMQ até o saldo.
+* **Limites:** não há alertas nem métrica própria do atraso no outbox ou do tamanho da fila.
+* **Produção (proposta):** Prometheus e Grafana para métricas e alertas, e um destino para traces e logs, ainda a escolher.
+
+
 <a id="8"></a>
 ## 8. Riscos e impactos
 
@@ -235,8 +276,8 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 | RabbitMQ fora do ar | O outbox guarda os eventos e reenvia quando ele volta |
 | Evento repetido | O *Consolidado* registra os eventos já processados (RNF05) |
 | Mensagem com falha repetida | Depois de 5 tentativas, vai para a fila de erros. Falha temporária do banco não conta. A contagem fica na memória do *Consolidado*, e não há rotina de reprocessamento. Evolução: reprocessar a fila de erros. Em produção, a proposta é ter um alerta para a fila de erros |
-| Pico acima de 50 req/s | Saldo já calculado e várias instâncias |
-| Keycloak fora do ar | Tokens de curta duração. Sessões ativas continuam |
+| Pico acima de 50 req/s | Saldo já calculado. Evolução: mais instâncias do *Consolidado* atrás de um balanceador, respeitando o limite de conexões do banco |
+| Keycloak fora do ar | Não há login nem renovação de token, e o caixa para de lançar quando o token expira (no máximo 5 minutos no ambiente local). A duração curta limita o tempo em que um acesso retirado continua valendo. Em produção, a proposta é ter mais de uma instância do Keycloak e banco próprio com redundância |
 | Lançamento errado, sem edição | Fora do escopo. Evolução: lançamento de ajuste |
 | Saldo diferente dos lançamentos, sem rotina de reconciliação | Os lançamentos continuam gravados no *Lançamentos* e permitem conferir o saldo. Evolução: reconciliação e reconstrução do saldo |
 | Mais de uma empresa no mesmo sistema, sem separação entre elas | Hoje o sistema atende uma só empresa. Evolução: isolamento por empresa no banco |
@@ -251,7 +292,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 - **Premissas:** 3 lojas e cerca de 1.000 lançamentos por dia (estimativa ainda não validada; o teste de carga mede só a consulta do saldo).
 - **Licenças:** sem custo (tudo open source).
 - **Infraestrutura:** VPS Hostinger, plano de 24 meses.
-- **Fora da estimativa:** domínio, cópias de segurança fora dos servidores, servidor de monitoramento, horas de implantação e operação, e margem para imprevistos.
+- **Fora da estimativa:** domínio, cópias de segurança fora dos servidores, servidor de monitoramento, banco do Keycloak e sua redundância, horas de implantação e operação, e margem para imprevistos.
 
 | Cenário | Servidores | Por mês, no plano de 24 meses | Por mês, após a renovação |
 | --- | --- | --- | --- |

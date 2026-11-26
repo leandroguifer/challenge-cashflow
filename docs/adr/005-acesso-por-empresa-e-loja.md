@@ -16,4 +16,4 @@ O Keycloak autentica (OIDC). A empresa é um grupo pai, e cada loja é um subgru
 
 ## Consequências
 * **Positivas:** o banco garante o isolamento mesmo se uma consulta esquecer o filtro por loja.
-* **Negativas / trade-offs:** o sistema depende do Keycloak. Uma mudança de grupo não altera um token já emitido: até ele expirar, vale o acesso antigo. A RLS precisa de teste próprio (isolamento entre lojas). O isolamento é por loja: o banco não separa empresas, e o sistema atende uma só.
+* **Negativas / trade-offs:** o sistema depende do Keycloak: sem ele não há login nem renovação de token, e o caixa para de lançar quando o token expira. Em produção, a proposta é ter mais de uma instância do Keycloak e banco próprio com redundância. Uma mudança de grupo não altera um token já emitido: até ele expirar, vale o acesso antigo. A RLS precisa de teste próprio (isolamento entre lojas). O isolamento é por loja: o banco não separa empresas, e o sistema atende uma só.
