@@ -146,9 +146,9 @@ title Nível 2 - Contêineres: sistema de fluxo de caixa
 System_Ext(keycloak, "Keycloak", "Autenticação e papéis (OIDC)")
 Person(usuario, "Usuário", "Proprietário, Caixa ou Auxiliar administrativo")
 System_Boundary(sistema, "Sistema de fluxo de caixa") {
-  Container(apiLanc, "API de *Lançamentos*", "C#, EF Core", "Registra débitos e créditos, abre e fecha o caixa")
+  Container(apiLanc, "API de *Lançamentos*", "C#, EF Core, Dapper", "Registra débitos e créditos, abre e fecha o caixa")
   Container(spa, "Front-end", "Angular, Taiga UI", "Tela de lançar e ver o saldo")
-  Container(apiCons, "API de *Consolidado*", "C#, Dapper", "Consome eventos e responde o saldo diário")
+  Container(apiCons, "API de *Consolidado*", "C#, EF Core, Dapper", "Consome eventos e responde o saldo diário")
   ContainerDb(dbLanc, "Banco de *Lançamentos*", "PostgreSQL", "Lançamentos e outbox")
   ContainerQueue(fila, "Fila de eventos", "RabbitMQ", "Transporta os eventos de lançamento")
   ContainerDb(dbCons, "Banco de *Consolidado*", "PostgreSQL", "Saldo diário e eventos já processados")
