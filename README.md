@@ -158,7 +158,7 @@ Os de integração sobem PostgreSQL e RabbitMQ com Testcontainers e exigem Docke
 
 `tests/load/run.sh` roda o k6 em Docker na rede do compose (a stack precisa estar de pé). Ele popula o banco do *Consolidado* com saldos de 3 lojas por 401 dias, pede o token do `proprietario` ao Keycloak, com as renovações espalhadas no tempo, e faz `GET /api/v1/daily-balances` de 30 dias a 50 req/s constantes por 5 minutos. O teste só passa se houver menos de 5% de falhas, se 99% das respostas levarem menos de 500 ms e se nenhuma requisição for perdida por falta de capacidade. O resumo é salvo em `tests/load/results/`, junto com as medições com horário (`.csv`, fora do Git).
 
-Resultado da última rodada, medido na máquina de desenvolvimento com serviços e bancos em Docker no mesmo host (`tests/load/results/balance-20261119T213138Z.txt` e `.json`). Não representa produção.
+Resultado da última rodada, medido na máquina de desenvolvimento com serviços e bancos em Docker no mesmo host (`tests/load/results/balance-20261126T184019Z.txt` e `.json`). Não representa produção.
 
 | Métrica (endpoint de saldo) | Valor |
 | --- | --- |
