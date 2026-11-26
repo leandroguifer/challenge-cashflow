@@ -208,6 +208,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 | [003](adr/003-rabbitmq-outbox.md) | RabbitMQ com outbox e consumidor sem duplicidade |
 | [004](adr/004-cqrs-leve.md) | CQRS leve, com EF Core na escrita e Dapper na leitura |
 | [005](adr/005-acesso-por-empresa-e-loja.md) | Acesso por empresa e loja com Keycloak e RLS no PostgreSQL |
+| [006](adr/006-observabilidade-opentelemetry.md) | Observabilidade com OpenTelemetry |
 
 <a id="6"></a>
 ## 6. Segurança
@@ -239,6 +240,7 @@ Para a escolha da arquitetura foram tomadas algumas decisões que estão registr
 | Lançamento errado, sem edição | Fora do escopo. Evolução: lançamento de ajuste |
 | Saldo diferente dos lançamentos, sem rotina de reconciliação | Os lançamentos continuam gravados no *Lançamentos* e permitem conferir o saldo. Evolução: reconciliação e reconstrução do saldo |
 | Mais de uma empresa no mesmo sistema, sem separação entre elas | Hoje o sistema atende uma só empresa. Evolução: isolamento por empresa no banco |
+| Fila ou outbox acumulando sem ninguém perceber | Hoje não há alerta nem métrica própria do outbox. Em produção, a proposta é alertar quando a fila acumula por mais de 1 minuto. Evolução: métrica do atraso no outbox |
 
 
 <a id="9"></a>
