@@ -156,22 +156,22 @@ Os de integração sobem PostgreSQL e RabbitMQ com Testcontainers e exigem Docke
 
 ### Carga (RNF02)
 
-`tests/load/run.sh` roda o k6 em Docker na rede do compose (a stack precisa estar de pé). Ele popula o banco do *Consolidado* com saldos de 3 lojas por 401 dias, pede o token do `proprietario` ao Keycloak e faz `GET /api/v1/daily-balances` de 30 dias a 50 req/s constantes por 5 minutos. O teste só passa se houver menos de 5% de falhas, se 99% das respostas levarem menos de 500 ms e se nenhuma requisição for perdida por falta de capacidade. O resumo é salvo em `tests/load/results/`.
+`tests/load/run.sh` roda o k6 em Docker na rede do compose (a stack precisa estar de pé). Ele popula o banco do *Consolidado* com saldos de 3 lojas por 401 dias, pede o token do `proprietario` ao Keycloak, com as renovações espalhadas no tempo, e faz `GET /api/v1/daily-balances` de 30 dias a 50 req/s constantes por 5 minutos. O teste só passa se houver menos de 5% de falhas, se 99% das respostas levarem menos de 500 ms e se nenhuma requisição for perdida por falta de capacidade. O resumo é salvo em `tests/load/results/`, junto com as medições com horário (`.csv`, fora do Git).
 
 Resultado da última rodada, medido na máquina de desenvolvimento com serviços e bancos em Docker no mesmo host (`tests/load/results/balance-20261119T213138Z.txt` e `.json`). Não representa produção.
 
 | Métrica (endpoint de saldo) | Valor |
 | --- | --- |
 | Requisições a 50 req/s por 5 minutos | 15.001 |
-| Falhas | 0 de 15.153 requisições HTTP (0,00%), incluindo token e verificação inicial |
+| Falhas | 0 de 15.111 requisições HTTP (0,00%), incluindo token e verificação inicial |
 | Requisições perdidas por falta de capacidade | 0 |
-| Média | 1,91 ms |
-| Mediana | 1,78 ms |
-| 95% das respostas levaram até | 2,51 ms |
-| 99% das respostas levaram até | 3,08 ms |
-| Máximo | 897,59 ms |
+| Média | 2,00 ms |
+| Mediana | 1,88 ms |
+| 95% das respostas levaram até | 2,67 ms |
+| 99% das respostas levaram até | 3,79 ms |
+| Máximo | 186,46 ms |
 
-Os três critérios foram atendidos, então o RNF02 foi cumprido nesta rodada. A resposta mais lenta levou 897,59 ms, muito acima dos 3,08 ms que cobrem 99% das respostas. Quantas requisições passaram de 500 ms não foi medido e a causa não foi investigada. Na rodada anterior, já removida do repositório, a resposta mais lenta foi de 807,97 ms.
+Os três critérios foram atendidos, então o RNF02 foi cumprido nesta rodada. Antes dela, no mesmo dia, duas rodadas foram reprovadas por requisições perdidas: 49, com um build na mesma máquina, e 21 (`balance-20261126T173944Z` e `balance-20261126T180529Z`). Os usuários virtuais renovavam o token quase ao mesmo tempo, e o roteiro passou a espalhar as renovações. Uma rodada sem essa mudança, com medições detalhadas e sem resumo salvo no repositório, também passou, por isso a causa das perdas não está confirmada.
 
 ## Decisões e limites
 
